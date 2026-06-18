@@ -38,11 +38,14 @@ import com.orca.compiler.core.symbols.NamespaceSymbol;
 import com.orca.compiler.core.symbols.Symbol;
 import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.symbols.ValueSymbol;
+import com.orca.compiler.core.symbols.VariableSymbol;
 import com.orca.compiler.core.symbols.sources.SourceSymbol;
 import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
 import com.orca.compiler.core.syntax.nodes.IdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.QualifiedIdentifierSyntax;
+import com.orca.compiler.core.typesystem.LangType;
+import com.orca.compiler.core.typesystem.NominalType;
 import com.orca.lsp.Visitors.SemanticTokenCollector;
 
 /**
@@ -374,35 +377,96 @@ public class OrcaTextDocumentService implements TextDocumentService {
 
     private MarkupContent getMarkupContentForSymbol(Symbol symbol) {
         var kind = completionKindFor(symbol);
-        return switch (symbol) {
+        var sb = new StringBuilder();
+        switch (symbol) {
             case MethodSymbol m -> {
-                var sb = new StringBuilder("```def ")
-                        .append(m.returnType().displayName()).append(" ").append(m.name()).append("(");
+                sb.append("def ")
+                        .append(formatTypeName(m.returnType()))
+                        .append(" ")
+                        .append(m.name())
+                        .append("(");
+
                 for (var p : m.parameters()) {
-                    sb.append(p.type().displayName()).append(" ").append(p.name());
+                    sb.append(formatTypeName(p.type()))
+                            .append(" ")
+                            .append(p.name());
                     if (p != m.parameters().getLast()) {
                         sb.append(", ");
                     }
                 }
-                sb.append(")```");
-                yield new MarkupContent(MarkupKind.MARKDOWN,
-                sb + "\n\n**" + symbol.getFullName() + "**\n\n*Kind: " + kind + "*\n\n");
+                sb.append(")");
             }
-            case TypeSymbol t ->
-                new MarkupContent(MarkupKind.MARKDOWN,
-                "```" + t.displayName() + " (" + t.type().unwrap().displayName() + ")```\n\n"
-                + "**" + symbol.getFullName() + "**\n\n*Kind: " + kind + "*\n\n");
+            case TypeSymbol t -> {
+                if (t.type() instanceof NominalType) {
+                    var underlying = t.type().unwrap();
+                    switch (underlying.kind()) {
+                        case COLLECTION ->
+                            sb.append("coll ");
+                        default ->
+                            sb.append("type ");
+                    }
+                }
+                sb.append(t.name());
+            }
+            case VariableSymbol v -> {
+                if (v.isCompileTimeConstant()) {
+                    sb.append("const ");
+                } else if (v.isImmutable()) {
+                    sb.append("let ");
+                } else {
+                    sb.append("var ");
+                }
+
+                sb.append(v.name()).append(": ").append(formatTypeName(v.type()));
+            }
             case ValueSymbol v ->
-                new MarkupContent(MarkupKind.MARKDOWN,
-                "```" + v.type().displayName() + " " + symbol.name() + "```\n\n"
-                + "**" + symbol.getFullName() + "**\n\n*Kind: " + kind + "*\n\n");
+                sb.append(formatTypeName(v.type())).append(" ").append(symbol.name());
             case NamespaceSymbol ns ->
-                new MarkupContent(MarkupKind.MARKDOWN,
-                "**" + ns.getFullName() + "**\n\n*Kind: " + kind + "*\n\n");
-            default ->
-                new MarkupContent(MarkupKind.MARKDOWN,
-                "**" + symbol.name() + "**\n\n*Kind: " + kind + "*\n\n```\n" + symbol.getFullName() + "\n```");
-        };
+                sb.append("package ").append(formatSymbolFullName(ns));
+            default -> {
+            }
+        }
+
+        buildOrcaCodeSnippetMarkdown(sb);
+        sb.append("\n\n*Kind: ").append(kind).append("*\n\n");
+        sb.append(formatSymbolFullName(symbol)).append("\n\n");
+
+        return new MarkupContent(MarkupKind.MARKDOWN, sb.toString());
+    }
+
+    private String formatSymbolFullName(Symbol symbol) {
+        String name;
+        if (symbol instanceof TypeSymbol typeSymbol) {
+            name = formatTypeName(typeSymbol.type());
+        } else {
+            name = symbol.name();
+        }
+
+        return name.replace(".", "::");
+    }
+
+    private String formatTypeName(LangType type) {
+        if (type instanceof NominalType nominal) {
+            var name = nominal.name();
+            var lastDot = name.lastIndexOf('.');
+            if (lastDot >= 0) {
+                name = name.substring(lastDot + 1);
+            }
+            return name;
+        }
+
+        return type.displayName();
+    }
+
+    private StringBuilder buildOrcaCodeSnippetMarkdown(StringBuilder sb) {
+        if (sb.length() == 0) {
+            sb.append("*No code snippet available*");
+        } else {
+            sb.insert(0, "```orca\n");
+            sb.append("\n```");
+        }
+
+        return sb;
     }
 
     private IdentifierSyntax getActualIdentifier(IdentifierSyntax syntax) {
