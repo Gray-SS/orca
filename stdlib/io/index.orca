@@ -1,0 +1,89 @@
+package std::io;
+
+import java::lang::System;
+
+# Printing functions for console output
+
+def println() {
+    System::out.println();
+}
+
+def println(any value) {
+    System::out.println(value);
+}
+
+def println(string value) {
+    System::out.println(value);
+}
+
+def println(byte value) {
+    System::out.println(value);
+}
+
+def println(short value) {
+    System::out.println(value);
+}
+
+def println(int value) {
+    System::out.println(value);
+}
+
+def println(long value) {
+    System::out.println(value);
+}
+
+def println(bool value) {
+    System::out.println(value);
+}
+
+def println(float value) {
+    System::out.println(value);
+}
+
+def println(double value) {
+    System::out.println(value);
+}
+
+def println(char value) {
+    System::out.println(value);
+}
+
+def print(string value) {
+    System::out.print(value);
+}
+
+def print(any value) {
+    System::out.print(value);
+}
+
+def print(bool value) {
+    System::out.print(value);
+}
+
+def print(char value) {
+    System::out.print(value);
+}
+
+def print(byte value) {
+    System::out.print(value);
+}
+
+def print(short value) {
+    System::out.print(value);
+}
+
+def print(int value) {
+    System::out.print(value);
+}
+
+def print(long value) {
+    System::out.print(value);
+}
+
+def print(float value) {
+    System::out.print(value);
+}
+
+def print(double value) {
+    System::out.print(value);
+}

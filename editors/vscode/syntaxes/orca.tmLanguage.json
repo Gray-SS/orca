@@ -1,0 +1,129 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Orca",
+  "scopeName": "source.orca",
+  "fileTypes": ["orca"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#keyword-control" },
+    { "include": "#keyword-declaration" },
+    { "include": "#builtin-type" },
+    { "include": "#boolean-literal" },
+    { "include": "#number-literal" },
+    { "include": "#def-declaration" },
+    { "include": "#coll-declaration" },
+    { "include": "#impl-declaration" },
+    { "include": "#type-identifier" },
+    { "include": "#operator" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.orca",
+      "match": "#.*$"
+    },
+
+    "string": {
+      "name": "string.quoted.double.orca",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.orca",
+          "match": "\\\\[nrt\\\\\"']"
+        }
+      ]
+    },
+
+    "keyword-control": {
+      "name": "keyword.control.orca",
+      "match": "\\b(if|else|for|while|return|is)\\b"
+    },
+
+    "keyword-declaration": {
+      "name": "storage.type.orca",
+      "match": "\\b(def|coll|impl|var|const|let|import|package)\\b"
+    },
+
+    "builtin-type": {
+      "name": "support.type.primitive.orca",
+      "match": "\\b(int|float|bool|string|void|char|byte|short|long|double|any)\\b"
+    },
+
+    "boolean-literal": {
+      "name": "constant.language.boolean.orca",
+      "match": "\\b(true|false)\\b"
+    },
+
+    "number-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.orca",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.orca",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+
+    "def-declaration": {
+      "comment": "Matches: def ReturnType? functionName(",
+      "match": "\\b(def)\\b\\s+(?:([A-Z][a-zA-Z0-9_]*)\\s+)?([a-z][a-zA-Z0-9_]*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "storage.type.orca" },
+        "2": { "name": "entity.name.type.orca" },
+        "3": { "name": "entity.name.function.orca" }
+      }
+    },
+
+    "coll-declaration": {
+      "match": "\\b(coll)\\b\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.orca" },
+        "2": { "name": "entity.name.type.orca" }
+      }
+    },
+
+    "impl-declaration": {
+      "match": "\\b(impl)\\b\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.orca" },
+        "2": { "name": "entity.name.type.orca" }
+      }
+    },
+
+    "type-identifier": {
+      "name": "entity.name.type.orca",
+      "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+    },
+
+    "operator": {
+      "name": "keyword.operator.orca",
+      "match": "\\+\\+|--|\\+=|-=|\\*=|/=|%=|==|=/=|->|>=|<=|&&|\\|\\||[+\\-*/%<>=!]"
+    },
+
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.accessor.orca",
+          "match": "::"
+        },
+        {
+          "name": "punctuation.separator.orca",
+          "match": "[,;:]"
+        },
+        {
+          "name": "punctuation.definition.block.orca",
+          "match": "[{}]"
+        },
+        {
+          "name": "punctuation.brackets.orca",
+          "match": "[()\\[\\]]"
+        }
+      ]
+    }
+  }
+}

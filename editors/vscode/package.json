@@ -1,0 +1,68 @@
+{
+  "name": "orca-language",
+  "displayName": "Orca Language Support",
+  "description": "Language support for the Orca programming language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Programming Languages"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "orca.syncProject",
+        "title": "Orca: Sync Project"
+      }
+    ],
+    "languages": [
+      {
+        "id": "orca",
+        "aliases": ["Orca", "orca"],
+        "extensions": [".orca"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "orca",
+        "scopeName": "source.orca",
+        "path": "./syntaxes/orca.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Orca",
+      "properties": {
+        "orca.server.jarPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Orca LSP server JAR. Leave empty to use the default path relative to the workspace root."
+        },
+        "orca.server.javaPath": {
+          "type": "string",
+          "default": "java",
+          "description": "Path to the Java executable used to run the LSP server."
+        },
+        "orca.classpath": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "JAR paths to add to the Orca compiler classpath (for resolving external JVM symbols)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  }
+}
