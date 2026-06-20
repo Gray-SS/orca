@@ -41,6 +41,7 @@ public enum TokenKind {
     Minus,
     MinusMinus,
     MinusEquals,
+    Bang,
     Star,
     StarEquals,
     Slash,

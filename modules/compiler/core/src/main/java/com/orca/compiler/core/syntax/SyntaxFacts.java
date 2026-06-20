@@ -70,16 +70,25 @@ public class SyntaxFacts {
 
     public static boolean isAssignmentOperator(TokenKind kind) {
         return switch (kind) {
-            case Equals, PlusEquals, MinusEquals, StarEquals, SlashEquals, PercentEquals ->
+            case Equals, PlusEquals, MinusEquals, StarEquals, SlashEquals, PercentEquals, PlusPlus, MinusMinus ->
                 true;
             default ->
                 false;
         };
     }
 
-    public static boolean isUnaryAssignmentOperator(TokenKind kind) {
+    public static boolean isUnaryPostfixAssignmentOperator(TokenKind kind) {
         return switch (kind) {
             case PlusPlus, MinusMinus ->
+                true;
+            default ->
+                false;
+        };
+    }
+
+    public static boolean isUnaryOperator(TokenKind kind) {
+        return switch (kind) {
+            case Plus, Minus, Bang ->
                 true;
             default ->
                 false;

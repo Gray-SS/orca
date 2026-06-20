@@ -182,15 +182,6 @@ public class Parser {
             return true;
         }
 
-        if (expr instanceof UnaryExpr unaryExpr) {
-            return switch (unaryExpr.operatorToken().kind()) {
-                case PlusPlus, MinusMinus ->
-                    true;
-                default ->
-                    false;
-            };
-        }
-
         return expr instanceof AssignmentExpr;
     }
 
@@ -198,7 +189,7 @@ public class Parser {
         return tokenIs(TokenKind.LParen)
                 || tokenIs(TokenKind.Identifier)
                 || LiteralExpr.isLiteral(tokenKind())
-                || UnaryOperatorKind.isUnaryOperator(tokenKind());
+                || SyntaxFacts.isUnaryOperator(tokenKind());
     }
 
     private boolean isStatementStart() {
@@ -427,7 +418,7 @@ public class Parser {
             // right-associative: a = b = c
             ExpressionSyntax right = parseAssignmentExpr();
 
-            return new AssignmentExpr(left, op, right);
+            left = new AssignmentExpr(left, op, right);
         }
 
         return left;
@@ -470,7 +461,7 @@ public class Parser {
     private ExpressionSyntax parseUnaryExpr() {
         Token maybeUnaryOperator = token();
 
-        if (UnaryOperatorKind.isUnaryOperator(maybeUnaryOperator.kind())) {
+        if (SyntaxFacts.isUnaryOperator(maybeUnaryOperator.kind())) {
             var operator = nextToken();
             var operand = parseUnaryExpr();
 
@@ -486,7 +477,7 @@ public class Parser {
         while (true) {
             switch (tokenKind()) {
                 case PlusPlus, MinusMinus -> {
-                    expr = new UnaryExpr(nextToken(), expr);
+                    expr = new AssignmentExpr(expr, nextToken(), null);
                 }
                 case Dot -> {
                     expr = parseMemberAccessExpr(expr);
