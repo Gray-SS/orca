@@ -28,4 +28,9 @@ public class BoundField extends BoundNode {
     public BoundNodeKind kind() {
         return BoundNodeKind.FIELD;
     }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitField(this);
+    }
 }

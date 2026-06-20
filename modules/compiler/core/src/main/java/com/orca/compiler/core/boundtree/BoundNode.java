@@ -1,5 +1,9 @@
 package com.orca.compiler.core.boundtree;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import com.orca.compiler.core.syntax.SyntaxNode;
@@ -16,6 +20,43 @@ public abstract class BoundNode implements IHaveSpan {
     SourceSpan synthesizedSpan;
 
     public abstract BoundNodeKind kind();
+
+    public abstract <R> R accept(BoundVisitor<R> visitor);
+
+    public List<BoundNode> children() {
+        List<BoundNode> result = new ArrayList<>();
+        Class<?> cls = getClass();
+        while (cls != null && cls != BoundNode.class) {
+            for (Field field : cls.getDeclaredFields()) {
+                if (!field.isAnnotationPresent(Child.class)) {
+                    continue;
+                }
+                field.setAccessible(true);
+                try {
+                    Object value = field.get(this);
+                    switch (value) {
+                        case null -> {
+                        }
+
+                        case BoundNode node ->
+                            result.add(node);
+                        case List<?> list -> {
+                            for (Object item : list) {
+                                if (item instanceof BoundNode node) {
+                                    result.add(node);
+                                }
+                            }
+                        }
+                        default -> {
+                        }
+                    }
+                } catch (IllegalAccessException ignored) {
+                }
+            }
+            cls = cls.getSuperclass();
+        }
+        return result;
+    }
 
     public @Nullable
     SyntaxNode syntax() {

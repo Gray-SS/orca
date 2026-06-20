@@ -2,6 +2,7 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
 import com.orca.compiler.core.boundtree.constants.BoundBoolConstant;
 import com.orca.compiler.core.boundtree.constants.BoundConstant;
 import com.orca.compiler.core.boundtree.constants.BoundFloatConstant;
@@ -34,6 +35,11 @@ public final class BoundLiteralExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.LITERAL_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitLiteralExpr(this);
     }
 
     @Override

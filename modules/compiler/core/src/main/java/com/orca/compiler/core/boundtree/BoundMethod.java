@@ -12,7 +12,7 @@ import com.orca.compiler.core.typesystem.LangType;
 public final class BoundMethod extends BoundNode {
 
     private final BoundNode owner;
-    private final BoundBlockStmt body;
+    @Child private final BoundBlockStmt body;
     private final MethodSymbol symbol;
 
     public BoundMethod(BoundNode owner, MethodSymbol symbol, BoundBlockStmt body) {
@@ -62,5 +62,10 @@ public final class BoundMethod extends BoundNode {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.METHOD;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitMethod(this);
     }
 }

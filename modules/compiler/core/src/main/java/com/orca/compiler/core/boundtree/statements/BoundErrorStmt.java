@@ -2,6 +2,7 @@ package com.orca.compiler.core.boundtree.statements;
 
 import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
+import com.orca.compiler.core.boundtree.BoundVisitor;
 import com.orca.compiler.core.syntax.statements.ErrorStatementSyntax;
 import com.orca.compiler.core.text.SourceSpan;
 
@@ -21,5 +22,10 @@ public final class BoundErrorStmt extends BoundStatement {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.ERROR_STATEMENT;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitErrorStmt(this);
     }
 }

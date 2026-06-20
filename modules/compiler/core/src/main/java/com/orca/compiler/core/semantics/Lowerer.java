@@ -52,12 +52,9 @@ public final class Lowerer extends BoundTreeRewriter {
                 if (boundStmt instanceof BoundBlockStmt block) {
                     boundStmt = flattenBlock(block);
                 }
-
                 return boundStmt;
             }
-            default -> {
-                throw new IllegalArgumentException("Cannot lower node of type: " + node.getClass().getName());
-            }
+            default -> throw new IllegalArgumentException("Cannot lower node of type: " + node.getClass().getName());
         }
     }
 
@@ -74,16 +71,14 @@ public final class Lowerer extends BoundTreeRewriter {
     }
 
     @Override
-    public BoundStatement rewriteWhileStmt(BoundWhileStmt whileStmt) {
-        /**
+    public BoundNode visitWhileStmt(BoundWhileStmt whileStmt) {
+        /*
          * while (condition) { body }
          *
          * Is lowered to:
          *
-         * label continue; continue: if (!condition) goto break; body goto
-         * continue; break:
+         * continue: if (!condition) goto break; body goto continue; break:
          */
-
         var breakLabel = generateLabel("break");
         var continueLabel = generateLabel("continue");
 
@@ -94,7 +89,6 @@ public final class Lowerer extends BoundTreeRewriter {
         return BoundNodeFactory.synthesizedBlock(
                 span,
                 BoundNodeFactory.synthesizedLabel(span, continueLabel),
-                // if (!condition) goto break;
                 BoundNodeFactory.synthesizedConditionalGoto(span, breakLabel, condition, true),
                 body,
                 BoundNodeFactory.synthesizedGoto(span, continueLabel),
@@ -103,27 +97,13 @@ public final class Lowerer extends BoundTreeRewriter {
     }
 
     @Override
-    public BoundStatement rewriteIfStmt(BoundIfStmt ifStmt) {
-        /**
-         * if (condition1) { thenBody1 } else if (condition[n]) { thenBody[n]
+    public BoundNode visitIfStmt(BoundIfStmt ifStmt) {
+        /*
+         * if (condition1) { thenBody1 } else if (condition[n]) { thenBody[n] }
          * else { elseBody }
          *
-         * Is lowered to:
-         *
-         * if (!condition1) goto thenBranch2; thenBody1 goto end;
-         *
-         * thenBranch2: if (!condition2) goto thenBranch3; thenBody2 goto end;
-         *
-         * ...
-         *
-         * thenBranch[n]: if (!condition[n]) goto elseBranch; thenBody[n] goto
-         * end;
-         *
-         * elseBranch: elseBody
-         *
-         * end:
+         * Is lowered to flat conditional gotos.
          */
-
         var loc = ifStmt.span();
         var statements = new ArrayList<BoundStatement>();
 
@@ -135,7 +115,6 @@ public final class Lowerer extends BoundTreeRewriter {
             var clause = clauses.get(i);
             BoundLabel nextLabel = (i + 1 < clauses.size()) ? generateLabel("elseIf") : elseLabel;
 
-            // if (!condition) goto nextLabel;
             statements.add(BoundNodeFactory.synthesizedConditionalGoto(loc, nextLabel, rewriteExpression(clause.condition), true));
             statements.add(rewriteStatement(clause.body));
             statements.add(BoundNodeFactory.synthesizedGoto(loc, endLabel));
@@ -153,9 +132,9 @@ public final class Lowerer extends BoundTreeRewriter {
     }
 
     @Override
-    public BoundExpression rewriteAssignmentExpr(BoundAssignmentExpr node) {
+    public BoundNode visitAssignmentExpr(BoundAssignmentExpr node) {
         if (node.operator().kind() == AssignmentOperatorKind.Simple) {
-            return super.rewriteAssignmentExpr(node);
+            return super.visitAssignmentExpr(node);
         }
 
         // Lower compound assignments (e.g., a += b) to simple assignments (e.g., a = a + b)
@@ -164,18 +143,12 @@ public final class Lowerer extends BoundTreeRewriter {
         var right = rewriteExpression(node.valueExpr());
 
         var binaryOperatorKind = switch (node.operator().kind()) {
-            case AdditionAssignment ->
-                BinaryOperatorKind.Addition;
-            case SubtractionAssignment ->
-                BinaryOperatorKind.Subtraction;
-            case MultiplicationAssignment ->
-                BinaryOperatorKind.Multiplication;
-            case DivisionAssignment ->
-                BinaryOperatorKind.Division;
-            case ModuloAssignment ->
-                BinaryOperatorKind.Modulo;
-            case Simple ->
-                throw new IllegalStateException("Unexpected simple assignment operator in compound assignment rewrite.");
+            case AdditionAssignment -> BinaryOperatorKind.Addition;
+            case SubtractionAssignment -> BinaryOperatorKind.Subtraction;
+            case MultiplicationAssignment -> BinaryOperatorKind.Multiplication;
+            case DivisionAssignment -> BinaryOperatorKind.Division;
+            case ModuloAssignment -> BinaryOperatorKind.Modulo;
+            case Simple -> throw new IllegalStateException("Unexpected simple assignment operator in compound assignment rewrite.");
         };
 
         var boundOperator = BoundOperators.bindBinaryOperatorOrThrow(binaryOperatorKind, left.type(), right.type());
@@ -185,8 +158,8 @@ public final class Lowerer extends BoundTreeRewriter {
     }
 
     @Override
-    public BoundStatement rewriteForStmt(BoundForStmt forStmt) {
-        /**
+    public BoundNode visitForStmt(BoundForStmt forStmt) {
+        /*
          * for (init; condition; step) { body }
          *
          * Is lowered to: init; while (condition) { body; step; }
@@ -208,24 +181,20 @@ public final class Lowerer extends BoundTreeRewriter {
     }
 
     @Override
-    public BoundExpression rewriteBinaryExpr(BoundBinaryExpr node) {
+    public BoundNode visitBinaryExpr(BoundBinaryExpr node) {
         var operatorKind = node.operator.kind();
         if (operatorKind == BinaryOperatorKind.LogicalAnd || operatorKind == BinaryOperatorKind.LogicalOr) {
-            // a && b is lowered to:
-            // temp = false;
-            // if (a) temp = b;
-            // return temp;
-            // a || b is lowered to:
-            // temp = true;
-            // if (!a) temp = b;
-            // return temp;
+            /*
+             * a && b is lowered to:
+             *   temp = false; if (a) temp = b; result = temp
+             * a || b is lowered to:
+             *   temp = true; if (!a) temp = b; result = temp
+             */
             var span = node.span();
             var a = rewriteExpression(node.left);
             var b = rewriteExpression(node.right);
 
             var isAnd = operatorKind == BinaryOperatorKind.LogicalAnd;
-
-            // temp = isAnd ? false : true;
             var initialValue = new BoundLiteralExpr(isAnd ? BoundBoolConstant.FALSE : BoundBoolConstant.TRUE);
 
             var tmp = generateTempVariable(LangType.Bool);
@@ -243,27 +212,24 @@ public final class Lowerer extends BoundTreeRewriter {
             );
         }
 
-        return super.rewriteBinaryExpr(node);
+        return super.visitBinaryExpr(node);
     }
 
     @Override
-    public BoundExpression rewriteUnaryExpr(BoundUnaryExpr node) {
-        var operatorKind = node.operator.kind();
-        if (operatorKind == UnaryOperatorKind.Identity) {
+    public BoundNode visitUnaryExpr(BoundUnaryExpr node) {
+        if (node.operator.kind() == UnaryOperatorKind.Identity) {
             // +a is lowered to: a
             return rewriteExpression(node.operand);
         }
 
-        return super.rewriteUnaryExpr(node);
+        return super.visitUnaryExpr(node);
     }
 
     private BoundLabel generateLabel(String prefix) {
-        String name = prefix + labelCounter++;
-        return new BoundLabel(name);
+        return new BoundLabel(prefix + labelCounter++);
     }
 
     private SynthesizedVariableSymbol generateTempVariable(LangType type) {
-        String name = "temp$" + tempVarCounter++;
-        return new SynthesizedVariableSymbol(name, type);
+        return new SynthesizedVariableSymbol("temp$" + tempVarCounter++, type);
     }
 }

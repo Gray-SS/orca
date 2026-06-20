@@ -3,6 +3,7 @@ package com.orca.compiler.core.boundtree.statements;
 import com.orca.compiler.core.boundtree.BoundLabel;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
+import com.orca.compiler.core.boundtree.BoundVisitor;
 
 public final class BoundLabelStmt extends BoundStatement {
 
@@ -15,5 +16,10 @@ public final class BoundLabelStmt extends BoundStatement {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.LABEL_STMT;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitLabelStmt(this);
     }
 }

@@ -2,12 +2,14 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundBinaryExpr extends BoundExpression {
 
-    public final BoundExpression left;
-    public final BoundExpression right;
+    @Child public final BoundExpression left;
+    @Child public final BoundExpression right;
     public final BoundOperator.Binary operator;
 
     public BoundBinaryExpr(BoundOperator.Binary operator, BoundExpression left, BoundExpression right) {
@@ -26,6 +28,11 @@ public final class BoundBinaryExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.BINARY_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitBinaryExpr(this);
     }
 
     @Override

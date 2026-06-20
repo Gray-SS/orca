@@ -2,12 +2,14 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundAssignmentExpr extends BoundExpression {
 
-    private final BoundExpression targetExpr;
-    private final BoundExpression valueExpr;
+    @Child private final BoundExpression targetExpr;
+    @Child private final BoundExpression valueExpr;
     private final BoundOperator.Assignment operator;
 
     public BoundAssignmentExpr(BoundExpression targetExpr, BoundOperator.Assignment operator, BoundExpression valueExpr) {
@@ -40,5 +42,10 @@ public final class BoundAssignmentExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.ASSIGNMENT_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitAssignmentExpr(this);
     }
 }

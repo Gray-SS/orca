@@ -5,6 +5,8 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.symbols.ConstructorSymbol;
 import com.orca.compiler.core.symbols.FieldSymbol;
 import com.orca.compiler.core.symbols.MethodSymbol;
@@ -41,6 +43,11 @@ public sealed abstract class BoundReferenceExpr extends BoundExpression
         Preconditions.checkArgument(!symbols.isEmpty(), "symbols cannot be empty");
 
         this.symbols = List.copyOf(symbols);
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitReferenceExpr(this);
     }
 
     public Symbol getFirstReferencedSymbol() {
@@ -224,8 +231,8 @@ public sealed abstract class BoundReferenceExpr extends BoundExpression
 
     public static final class MemberAccessRef extends BoundReferenceExpr {
 
-        private final BoundExpression receiver;
-        private final BoundReferenceExpr memberExpr;
+        @Child private final BoundExpression receiver;
+        @Child private final BoundReferenceExpr memberExpr;
 
         public MemberAccessRef(BoundExpression receiver, BoundReferenceExpr memberExpr) {
             super(memberExpr.getReferencedSymbols());

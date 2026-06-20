@@ -2,11 +2,13 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundConversionExpr extends BoundExpression {
 
-    private final BoundExpression operand;
+    @Child private final BoundExpression operand;
     private final LangType targetType;
 
     public BoundConversionExpr(BoundExpression operand, LangType targetType) {
@@ -22,6 +24,11 @@ public final class BoundConversionExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.CONVERSION_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitConversionExpr(this);
     }
 
     @Override

@@ -4,11 +4,13 @@ import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 import com.orca.compiler.core.boundtree.BoundVariableDeclarator;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.symbols.VariableSymbol;
 
 public final class BoundVariableDeclStmt extends BoundStatement {
 
-    private final BoundVariableDeclarator variableDeclarator;
+    @Child private final BoundVariableDeclarator variableDeclarator;
 
     public BoundVariableDeclStmt(BoundVariableDeclarator variableDeclarator) {
         this.variableDeclarator = variableDeclarator;
@@ -29,5 +31,10 @@ public final class BoundVariableDeclStmt extends BoundStatement {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.VARIABLE_DECL_STMT;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitVariableDeclStmt(this);
     }
 }

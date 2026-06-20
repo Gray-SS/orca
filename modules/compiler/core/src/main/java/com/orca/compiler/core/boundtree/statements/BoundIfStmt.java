@@ -7,14 +7,16 @@ import javax.annotation.Nullable;
 import com.orca.compiler.core.boundtree.BoundIfClause;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 
 public final class BoundIfStmt extends BoundStatement {
 
-    public final BoundIfClause ifClause;
-    public final List<BoundIfClause> elseIfClauses;
+    @Child public final BoundIfClause ifClause;
+    @Child public final List<BoundIfClause> elseIfClauses;
 
     @Nullable
-    public final BoundStatement elseClause;
+    @Child public final BoundStatement elseClause;
 
     public BoundIfStmt(BoundIfClause ifClause, List<BoundIfClause> elseIfClauses, @Nullable BoundStatement elseClause) {
         this.ifClause = ifClause;
@@ -22,8 +24,7 @@ public final class BoundIfStmt extends BoundStatement {
         this.elseClause = elseClause;
     }
 
-    public @Nullable
-    BoundStatement elseBlock() {
+    public @Nullable BoundStatement elseBlock() {
         return elseClause;
     }
 
@@ -37,5 +38,10 @@ public final class BoundIfStmt extends BoundStatement {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.IF_STMT;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitIfStmt(this);
     }
 }

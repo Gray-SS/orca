@@ -5,7 +5,7 @@ import com.orca.compiler.core.symbols.VariableSymbol;
 public final class BoundVariableDeclarator extends BoundNode {
 
     private final VariableSymbol variable;
-    private final BoundExpression initializer;
+    @Child private final BoundExpression initializer;
 
     public BoundVariableDeclarator(VariableSymbol variable, BoundExpression initializer) {
         this.variable = variable;
@@ -23,5 +23,10 @@ public final class BoundVariableDeclarator extends BoundNode {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.VARIABLE_DECLARATOR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitVariableDeclarator(this);
     }
 }

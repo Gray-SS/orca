@@ -2,12 +2,14 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundTypeTestExpr extends BoundExpression {
 
-    private final BoundExpression operand;
+    @Child private final BoundExpression operand;
     private final LangType targetType;
     private final TypeSymbol targetTypeSymbol;
 
@@ -37,5 +39,10 @@ public final class BoundTypeTestExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.TYPE_TEST_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitTypeTestExpr(this);
     }
 }

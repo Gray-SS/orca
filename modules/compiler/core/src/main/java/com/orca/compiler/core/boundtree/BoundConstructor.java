@@ -6,7 +6,7 @@ import com.orca.compiler.core.symbols.ConstructorSymbol;
 public final class BoundConstructor extends BoundNode {
 
     private final ConstructorSymbol constructor;
-    private final BoundBlockStmt body;
+    @Child private final BoundBlockStmt body;
 
     public BoundConstructor(ConstructorSymbol constructor, BoundBlockStmt body) {
         this.constructor = constructor;
@@ -24,5 +24,10 @@ public final class BoundConstructor extends BoundNode {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.CONSTRUCTOR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitConstructor(this);
     }
 }

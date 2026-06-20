@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.symbols.ConstructorSymbol;
 import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
@@ -11,7 +13,7 @@ import com.orca.compiler.core.typesystem.LangType;
 public final class BoundConstructObjectExpr extends BoundExpression {
 
     private final ConstructorSymbol constructor;
-    private final List<BoundExpression> arguments;
+    @Child private final List<BoundExpression> arguments;
 
     public BoundConstructObjectExpr(ConstructorSymbol constructor, List<BoundExpression> arguments) {
         this.constructor = constructor;
@@ -54,6 +56,11 @@ public final class BoundConstructObjectExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.CONSTRUCT_OBJECT_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitConstructObjectExpr(this);
     }
 
     @Override

@@ -5,77 +5,206 @@ import java.util.ArrayList;
 import com.orca.compiler.core.boundtree.expressions.*;
 import com.orca.compiler.core.boundtree.statements.*;
 
-public abstract class BoundTreeRewriter {
+public abstract class BoundTreeRewriter implements BoundVisitor<BoundNode> {
 
+    // Typed entry points for internal recursion
     public BoundExpression rewriteExpression(BoundExpression node) {
-        return switch (node) {
-            case BoundArrayAccessExpr b ->
-                rewriteArrayAccessExpr(b);
-            case BoundArrayLiteralExpr b ->
-                rewriteArrayLiteralExpr(b);
-            case BoundBinaryExpr b ->
-                rewriteBinaryExpr(b);
-            case BoundCollectionLiteralExpr b ->
-                rewriteCollectionLiteralExpr(b);
-            case BoundMethodCallExpr b ->
-                rewriteFunctionCallExpr(b);
-            case BoundLiteralExpr b ->
-                rewriteLiteralExpr(b);
-            case BoundUnaryExpr b ->
-                rewriteUnaryExpr(b);
-            case BoundReferenceExpr b ->
-                rewriteReferenceExpr(b);
-            case BoundAssignmentExpr b ->
-                rewriteAssignmentExpr(b);
-            case BoundConversionExpr b ->
-                rewriteConversionExpr(b);
-            case null ->
-                null;
-            default ->
-                node;
-        };
+        if (node == null) {
+            return null;
+        }
+        return (BoundExpression) node.accept(this);
     }
 
     public BoundStatement rewriteStatement(BoundStatement node) {
-        return switch (node) {
-            case BoundBlockStmt b ->
-                rewriteBlockStmt(b);
-            case BoundExpressionStmt b ->
-                rewriteExpressionStmt(b);
-            case BoundIfStmt b ->
-                rewriteIfStmt(b);
-            case BoundWhileStmt b ->
-                rewriteWhileStmt(b);
-            case BoundForStmt b ->
-                rewriteForStmt(b);
-            case BoundVariableDeclStmt b ->
-                rewriteVariableDeclarationStmt(b);
-            case BoundReturnStmt b ->
-                rewriteReturnStmt(b);
-            case null ->
-                null;
-            default ->
-                node;
-        };
-    }
-
-    public BoundExpression rewriteAssignmentExpr(BoundAssignmentExpr node) {
-        var rewrittenTargetExpr = rewriteExpression(node.targetExpr());
-        var rewrittenInitializerExpr = rewriteExpression(node.valueExpr());
-        if (rewrittenTargetExpr == node.targetExpr() && rewrittenInitializerExpr == node.valueExpr()) {
-            return node;
+        if (node == null) {
+            return null;
         }
-
-        return new BoundAssignmentExpr(rewrittenTargetExpr, node.operator(), rewrittenInitializerExpr);
+        return (BoundStatement) node.accept(this);
     }
 
     public BoundBlockStmt rewriteBlockStmt(BoundBlockStmt node) {
-        var rewrittenStatements = new ArrayList<BoundStatement>();
+        return (BoundBlockStmt) node.accept(this);
+    }
+
+    // Top-level declarations — not visited by default
+    @Override
+    public BoundNode visitProgram(BoundProgram node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitNamespace(BoundNamespace node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitType(BoundType node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitMethod(BoundMethod node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitField(BoundField node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitConstructor(BoundConstructor node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitVariable(BoundVariable node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitVariableDeclarator(BoundVariableDeclarator node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitIfClause(BoundIfClause node) {
+        var condition = rewriteExpression(node.condition);
+        var body = rewriteStatement(node.body);
+        if (condition == node.condition && body == node.body) {
+            return node;
+        }
+        return new BoundIfClause(condition, body);
+    }
+
+    // Expressions
+    @Override
+    public BoundNode visitAssignmentExpr(BoundAssignmentExpr node) {
+        var target = rewriteExpression(node.targetExpr());
+        var value = rewriteExpression(node.valueExpr());
+        if (target == node.targetExpr() && value == node.valueExpr()) {
+            return node;
+        }
+        return new BoundAssignmentExpr(target, node.operator(), value);
+    }
+
+    @Override
+    public BoundNode visitArrayLiteralExpr(BoundArrayLiteralExpr node) {
+        var length = rewriteExpression(node.lengthExpr);
+        if (length == node.lengthExpr) {
+            return node;
+        }
+        return new BoundArrayLiteralExpr(node.elementType, length);
+    }
+
+    @Override
+    public BoundNode visitArrayAccessExpr(BoundArrayAccessExpr node) {
+        var array = rewriteExpression(node.arrayExpr());
+        var index = rewriteExpression(node.indexExpr());
+        if (array == node.arrayExpr() && index == node.indexExpr()) {
+            return node;
+        }
+        return new BoundArrayAccessExpr(array, index);
+    }
+
+    @Override
+    public BoundNode visitBinaryExpr(BoundBinaryExpr node) {
+        var left = rewriteExpression(node.left);
+        var right = rewriteExpression(node.right);
+        if (left == node.left && right == node.right) {
+            return node;
+        }
+        return new BoundBinaryExpr(node.operator, left, right);
+    }
+
+    @Override
+    public BoundNode visitUnaryExpr(BoundUnaryExpr node) {
+        var operand = rewriteExpression(node.operand);
+        if (operand == node.operand) {
+            return node;
+        }
+        return new BoundUnaryExpr(node.operator, operand);
+    }
+
+    @Override
+    public BoundNode visitConversionExpr(BoundConversionExpr node) {
+        var operand = rewriteExpression(node.operand());
+        if (operand == node.operand()) {
+            return node;
+        }
+        return new BoundConversionExpr(operand, node.type());
+    }
+
+    @Override
+    public BoundNode visitMethodCallExpr(BoundMethodCallExpr node) {
+        var args = new ArrayList<BoundExpression>();
         boolean anyRewritten = false;
-        for (BoundStatement stmt : node.statements()) {
-            var rewrittenStmt = rewriteStatement(stmt);
-            rewrittenStatements.add(rewrittenStmt);
-            if (rewrittenStmt != stmt) {
+        for (var arg : node.arguments) {
+            var rewritten = rewriteExpression(arg);
+            args.add(rewritten);
+            if (rewritten != arg) {
+                anyRewritten = true;
+            }
+        }
+        if (!anyRewritten) {
+            return node;
+        }
+        return new BoundMethodCallExpr(node.methodRef, args);
+    }
+
+    @Override
+    public BoundNode visitCollectionLiteralExpr(BoundCollectionLiteralExpr node) {
+        var args = new ArrayList<BoundExpression>();
+        boolean anyRewritten = false;
+        for (var arg : node.arguments) {
+            var rewritten = rewriteExpression(arg);
+            args.add(rewritten);
+            if (rewritten != arg) {
+                anyRewritten = true;
+            }
+        }
+        if (!anyRewritten) {
+            return node;
+        }
+        return new BoundCollectionLiteralExpr(node.symbol, args);
+    }
+
+    @Override
+    public BoundNode visitReferenceExpr(BoundReferenceExpr node) {
+        if (node instanceof BoundReferenceExpr.MemberAccessRef ma) {
+            var receiver = rewriteExpression(ma.getReceiver());
+            if (receiver == ma.getReceiver()) {
+                return node;
+            }
+            return new BoundReferenceExpr.MemberAccessRef(receiver, ma.getMemberExpr());
+        }
+        return node;
+    }
+
+    @Override
+    public BoundNode visitLiteralExpr(BoundLiteralExpr node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitDefaultValueExpr(BoundDefaultValueExpr node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitErrorExpr(BoundErrorExpr node) {
+        return node;
+    }
+
+    @Override
+    public BoundNode visitConstructObjectExpr(BoundConstructObjectExpr node) {
+        var args = new ArrayList<BoundExpression>();
+        boolean anyRewritten = false;
+
+        for (var arg : node.getArguments()) {
+            var rewritten = rewriteExpression(arg);
+            args.add(rewritten);
+            if (rewritten != arg) {
                 anyRewritten = true;
             }
         }
@@ -84,188 +213,139 @@ public abstract class BoundTreeRewriter {
             return node;
         }
 
-        return new BoundBlockStmt(rewrittenStatements);
+        return new BoundConstructObjectExpr(node.getConstructor(), args);
     }
 
-    public BoundStatement rewriteExpressionStmt(BoundExpressionStmt node) {
-        var rewrittenExpr = rewriteExpression(node.expression());
-        if (rewrittenExpr == node.expression()) {
-            return node;
-        }
-
-        return new BoundExpressionStmt(rewrittenExpr);
-    }
-
-    public BoundStatement rewriteIfStmt(BoundIfStmt node) {
-        var rewrittenIfClause = rewriteIfClause(node.ifClause);
-        var rewrittenElseIfClauses = new ArrayList<BoundIfClause>();
+    @Override
+    public BoundNode visitSequenceExpr(BoundSequenceExpr node) {
+        var rewrittenSideEffects = new ArrayList<BoundStatement>();
         boolean anyRewritten = false;
-        for (BoundIfClause elseIfClause : node.elseIfClauses) {
-            var rewrittenElseIfClause = rewriteIfClause(elseIfClause);
-            rewrittenElseIfClauses.add(rewrittenElseIfClause);
-            if (rewrittenElseIfClause != elseIfClause) {
+        for (var stmt : node.sideEffects()) {
+            var rewritten = rewriteStatement(stmt);
+            rewrittenSideEffects.add(rewritten);
+            if (rewritten != stmt) {
                 anyRewritten = true;
             }
         }
 
-        var rewrittenElseClause = node.elseBlock() == null ? null : rewriteStatement(node.elseBlock());
-        if (rewrittenIfClause == node.ifClause && !anyRewritten && rewrittenElseClause == node.elseBlock()) {
+        var rewrittenValue = rewriteExpression(node.value());
+        if (!anyRewritten && rewrittenValue == node.value()) {
             return node;
         }
 
-        return new BoundIfStmt(rewrittenIfClause, rewrittenElseIfClauses, rewrittenElseClause);
+        return new BoundSequenceExpr(rewrittenSideEffects, rewrittenValue);
     }
 
-    public BoundIfClause rewriteIfClause(BoundIfClause node) {
-        var rewrittenCondition = rewriteExpression(node.condition);
-        var rewrittenBody = rewriteStatement(node.body);
-        if (rewrittenCondition == node.condition && rewrittenBody == node.body) {
+    @Override
+    public BoundNode visitTypeTestExpr(BoundTypeTestExpr node) {
+        return node;
+    }
+
+    // Statements
+    @Override
+    public BoundNode visitBlockStmt(BoundBlockStmt node) {
+        var rewritten = new ArrayList<BoundStatement>();
+        boolean anyRewritten = false;
+        for (var stmt : node.statements()) {
+            var r = rewriteStatement(stmt);
+            rewritten.add(r);
+            if (r != stmt) {
+                anyRewritten = true;
+            }
+        }
+        if (!anyRewritten) {
             return node;
         }
-
-        return new BoundIfClause(rewrittenCondition, rewrittenBody);
+        return new BoundBlockStmt(rewritten);
     }
 
-    public BoundStatement rewriteWhileStmt(BoundWhileStmt node) {
-        var rewrittenCondition = rewriteExpression(node.condition());
-        var rewrittenBody = rewriteBlockStmt(node.body());
-        if (rewrittenCondition == node.condition() && rewrittenBody == node.body()) {
+    @Override
+    public BoundNode visitExpressionStmt(BoundExpressionStmt node) {
+        var expr = rewriteExpression(node.expression());
+        if (expr == node.expression()) {
             return node;
         }
-
-        return new BoundWhileStmt(rewrittenCondition, rewrittenBody);
+        return new BoundExpressionStmt(expr);
     }
 
-    public BoundStatement rewriteForStmt(BoundForStmt node) {
-        var rewrittenConditionExpr = rewriteExpression(node.conditionExpr);
-        var rewrittenStepExpr = rewriteExpression(node.stepExpr);
-        var rewrittenBody = rewriteBlockStmt(node.body);
-        if (rewrittenConditionExpr == node.conditionExpr && rewrittenStepExpr == node.stepExpr && rewrittenBody == node.body) {
+    @Override
+    public BoundNode visitIfStmt(BoundIfStmt node) {
+        var ifClause = (BoundIfClause) node.ifClause.accept(this);
+        var elseIfClauses = new ArrayList<BoundIfClause>();
+        boolean anyRewritten = ifClause != node.ifClause;
+        for (var clause : node.elseIfClauses) {
+            var r = (BoundIfClause) clause.accept(this);
+            elseIfClauses.add(r);
+            if (r != clause) {
+                anyRewritten = true;
+            }
+        }
+        var elseClause = node.elseBlock() == null ? null : rewriteStatement(node.elseBlock());
+        if (!anyRewritten && elseClause == node.elseBlock()) {
             return node;
         }
-
-        return new BoundForStmt(node.declarator, rewrittenConditionExpr, rewrittenStepExpr, rewrittenBody);
+        return new BoundIfStmt(ifClause, elseIfClauses, elseClause);
     }
 
-    public BoundStatement rewriteVariableDeclarationStmt(BoundVariableDeclStmt node) {
-        var rewrittenInitializerExpr = rewriteExpression(node.initializer());
-        if (rewrittenInitializerExpr == node.initializer()) {
+    @Override
+    public BoundNode visitWhileStmt(BoundWhileStmt node) {
+        var condition = rewriteExpression(node.condition());
+        var body = rewriteBlockStmt(node.body());
+        if (condition == node.condition() && body == node.body()) {
             return node;
         }
-
-        return new BoundVariableDeclStmt(node.variable(), rewrittenInitializerExpr);
+        return new BoundWhileStmt(condition, body);
     }
 
-    public BoundStatement rewriteReturnStmt(BoundReturnStmt node) {
+    @Override
+    public BoundNode visitForStmt(BoundForStmt node) {
+        var condition = rewriteExpression(node.conditionExpr);
+        var step = rewriteExpression(node.stepExpr);
+        var body = rewriteBlockStmt(node.body);
+        if (condition == node.conditionExpr && step == node.stepExpr && body == node.body) {
+            return node;
+        }
+        return new BoundForStmt(node.declarator, condition, step, body);
+    }
+
+    @Override
+    public BoundNode visitVariableDeclStmt(BoundVariableDeclStmt node) {
+        var init = rewriteExpression(node.initializer());
+        if (init == node.initializer()) {
+            return node;
+        }
+        return new BoundVariableDeclStmt(node.variable(), init);
+    }
+
+    @Override
+    public BoundNode visitReturnStmt(BoundReturnStmt node) {
         if (node.expression == null) {
             return node;
         }
-
-        var rewrittenExpr = rewriteExpression(node.expression);
-        if (rewrittenExpr == node.expression) {
+        var expr = rewriteExpression(node.expression);
+        if (expr == node.expression) {
             return node;
         }
-
-        return new BoundReturnStmt(rewrittenExpr);
+        return new BoundReturnStmt(expr);
     }
 
-    public BoundExpression rewriteLiteralExpr(BoundLiteralExpr node) {
+    @Override
+    public BoundNode visitGotoStmt(BoundGotoStmt node) {
         return node;
     }
 
-    public BoundExpression rewriteArrayLiteralExpr(BoundArrayLiteralExpr node) {
-        var rewrittenLengthExpr = rewriteExpression(node.lengthExpr);
-        if (rewrittenLengthExpr == node.lengthExpr) {
-            return node;
-        }
-
-        return new BoundArrayLiteralExpr(node.elementType, rewrittenLengthExpr);
-    }
-
-    public BoundExpression rewriteConversionExpr(BoundConversionExpr node) {
-        var rewrittenOperand = rewriteExpression(node.operand());
-        if (rewrittenOperand == node.operand()) {
-            return node;
-        }
-        return new BoundConversionExpr(rewrittenOperand, node.type());
-    }
-
-    public BoundExpression rewriteFunctionCallExpr(BoundMethodCallExpr node) {
-        var rewrittenArgs = new ArrayList<BoundExpression>();
-
-        boolean anyRewritten = false;
-        for (BoundExpression arg : node.arguments) {
-            var rewrittenArg = rewriteExpression(arg);
-            rewrittenArgs.add(rewrittenArg);
-            if (rewrittenArg != arg) {
-                anyRewritten = true;
-            }
-        }
-
-        if (!anyRewritten) {
-            return node;
-        }
-
-        return new BoundMethodCallExpr(node.methodRef, rewrittenArgs);
-    }
-
-    public BoundExpression rewriteCollectionLiteralExpr(BoundCollectionLiteralExpr node) {
-        var rewrittenArgs = new ArrayList<BoundExpression>();
-        boolean anyRewritten = false;
-        for (BoundExpression arg : node.arguments) {
-            var rewrittenArg = rewriteExpression(arg);
-            rewrittenArgs.add(rewrittenArg);
-            if (rewrittenArg != arg) {
-                anyRewritten = true;
-            }
-        }
-
-        if (!anyRewritten) {
-            return node;
-        }
-
-        return new BoundCollectionLiteralExpr(node.symbol, rewrittenArgs);
-    }
-
-    public BoundExpression rewriteReferenceExpr(BoundReferenceExpr node) {
-        if (node instanceof BoundReferenceExpr.MemberAccessRef ma) {
-            var rewrittenReceiver = rewriteExpression(ma.getReceiver());
-            if (rewrittenReceiver == ma.getReceiver()) {
-                return node;
-            }
-
-            return new BoundReferenceExpr.MemberAccessRef(rewrittenReceiver, ma.getMemberExpr());
-        }
-
+    @Override
+    public BoundNode visitConditionalGotoStmt(BoundConditionalGotoStmt node) {
         return node;
     }
 
-    public BoundExpression rewriteBinaryExpr(BoundBinaryExpr node) {
-        var rewrittenLeft = rewriteExpression(node.left);
-        var rewrittenRight = rewriteExpression(node.right);
-        if (rewrittenLeft == node.left && rewrittenRight == node.right) {
-            return node;
-        }
-
-        return new BoundBinaryExpr(node.operator, rewrittenLeft, rewrittenRight);
+    @Override
+    public BoundNode visitLabelStmt(BoundLabelStmt node) {
+        return node;
     }
 
-    public BoundExpression rewriteUnaryExpr(BoundUnaryExpr node) {
-        var rewrittenOperand = rewriteExpression(node.operand);
-        if (rewrittenOperand == node.operand) {
-            return node;
-        }
-
-        return new BoundUnaryExpr(node.operator, rewrittenOperand);
-    }
-
-    public BoundExpression rewriteArrayAccessExpr(BoundArrayAccessExpr node) {
-        var rewrittenArray = rewriteExpression(node.arrayExpr());
-        var rewrittenIndex = rewriteExpression(node.indexExpr());
-        if (rewrittenArray == node.arrayExpr() && rewrittenIndex == node.indexExpr()) {
-            return node;
-        }
-
-        return new BoundArrayAccessExpr(rewrittenArray, rewrittenIndex);
+    @Override
+    public BoundNode visitErrorStmt(BoundErrorStmt node) {
+        return node;
     }
 }

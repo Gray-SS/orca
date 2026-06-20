@@ -7,7 +7,7 @@ public final class BoundVariable extends BoundNode {
 
     private final BoundNode owner;
     private final VariableSymbol symbol;
-    private final BoundExpression initializer;
+    @Child private final BoundExpression initializer;
 
     public BoundVariable(BoundNode owner, VariableSymbol symbol, BoundExpression initializer) {
         Debug.requireNotNull(owner, "Owner cannot be null for a BoundVariable.");
@@ -38,5 +38,10 @@ public final class BoundVariable extends BoundNode {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.VARIABLE;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitVariable(this);
     }
 }

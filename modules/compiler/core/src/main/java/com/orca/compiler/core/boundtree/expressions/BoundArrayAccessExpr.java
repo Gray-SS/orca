@@ -2,12 +2,14 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 import com.orca.compiler.core.typesystem.ArrayType;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundArrayAccessExpr extends BoundExpression {
-    private final BoundExpression arrayExpr;
-    private final BoundExpression indexExpr;
+    @Child private final BoundExpression arrayExpr;
+    @Child private final BoundExpression indexExpr;
 
     public BoundArrayAccessExpr(BoundExpression arrayExpr, BoundExpression indexExpr) {
         this.arrayExpr = arrayExpr;
@@ -33,6 +35,11 @@ public final class BoundArrayAccessExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.ARRAY_ACCESS_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitArrayAccessExpr(this);
     }
 
     @Override

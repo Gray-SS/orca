@@ -9,10 +9,10 @@ public final class BoundNamespace extends BoundNode {
     private BoundType packageClass;
 
     private final NamespaceSymbol symbol;
-    private final List<BoundType> types = new java.util.ArrayList<>();
-    private final List<BoundMethod> methods = new java.util.ArrayList<>();
-    private final List<BoundVariable> variables = new java.util.ArrayList<>();
-    private final List<BoundNamespace> namespaces = new java.util.ArrayList<>();
+    @Child private final List<BoundType> types = new java.util.ArrayList<>();
+    @Child private final List<BoundMethod> methods = new java.util.ArrayList<>();
+    @Child private final List<BoundVariable> variables = new java.util.ArrayList<>();
+    @Child private final List<BoundNamespace> namespaces = new java.util.ArrayList<>();
 
     public BoundNamespace(NamespaceSymbol symbol) {
         this.symbol = symbol;
@@ -79,5 +79,10 @@ public final class BoundNamespace extends BoundNode {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.NAMESPACE;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitNamespace(this);
     }
 }

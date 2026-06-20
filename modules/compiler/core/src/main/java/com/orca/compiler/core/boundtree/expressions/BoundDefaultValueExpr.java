@@ -2,6 +2,7 @@ package com.orca.compiler.core.boundtree.expressions;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
+import com.orca.compiler.core.boundtree.BoundVisitor;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundDefaultValueExpr extends BoundExpression {
@@ -20,5 +21,10 @@ public final class BoundDefaultValueExpr extends BoundExpression {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.DEFAULT_VALUE_EXPR;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitDefaultValueExpr(this);
     }
 }

@@ -9,9 +9,13 @@ public final class BoundType extends BoundNode {
 
     private final TypeSymbol symbol;
     private final BoundNamespace owner;
+    @Child
     private final List<BoundMethod> methods = new java.util.ArrayList<>();
+    @Child
     private final List<BoundVariable> variables = new java.util.ArrayList<>();
+    @Child
     private final List<BoundField> fields = new java.util.ArrayList<>();
+    @Child
     private final List<BoundConstructor> constructors = new java.util.ArrayList<>();
 
     public BoundType(BoundNamespace owner, TypeSymbol symbol) {
@@ -62,5 +66,10 @@ public final class BoundType extends BoundNode {
 
     public List<BoundConstructor> getConstructors() {
         return List.copyOf(constructors);
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitType(this);
     }
 }

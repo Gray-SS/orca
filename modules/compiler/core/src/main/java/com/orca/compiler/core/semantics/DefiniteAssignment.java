@@ -10,7 +10,7 @@ import com.orca.compiler.core.CompilerException;
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundMethod;
 import com.orca.compiler.core.boundtree.BoundStatement;
-import com.orca.compiler.core.boundtree.BoundTreeRewriter;
+import com.orca.compiler.core.boundtree.BoundWalker;
 import com.orca.compiler.core.boundtree.expressions.BoundAssignmentExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundReferenceExpr;
 import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
@@ -216,48 +216,52 @@ public final class DefiniteAssignment {
         }
 
         // Use a small walker to catch any nested variable refs and report errors with CompilerException
-        try {
-            new BoundTreeRewriter() {
-                @Override
-                public BoundExpression rewriteReferenceExpr(BoundReferenceExpr node) {
-                    if (!(node instanceof BoundReferenceExpr.VariableRef vref)) {
-                        return node;
-                    }
-
-                    var var = vref.getReferencedSymbol();
-                    if (var.isGlobalVariable()) {
-                        return node;
-                    }
-
-                    Integer idx = index.get(var);
-                    if (idx == null) {
-                        return node;
-                    }
-
-                    if (!assigned.get(idx)) {
-                        try {
-                            throw CompilerException.wrap(DiagnosticFactory.uninitializedVariable(node.span(), var.name()));
-                        } catch (CompilerException e) {
-                            throw new RuntimeWrappedCompilerException(e);
-                        }
-                    }
-
-                    return node;
-                }
-            ;
-            }.rewriteExpression(expr);
-        } catch (RuntimeWrappedCompilerException rw) {
-            throw rw.inner;
+        List<ValueSymbol> uninitializedVariables = UnitializedVariableCollector.collect(expr, assigned, index);
+        if (!uninitializedVariables.isEmpty()) {
+            var first = uninitializedVariables.get(0);
+            throw CompilerException.wrap(DiagnosticFactory.uninitializedVariable(expr.span(), first.name()));
         }
     }
 
-    private static final class RuntimeWrappedCompilerException extends RuntimeException {
+    private static final class UnitializedVariableCollector extends BoundWalker {
 
-        public final CompilerException inner;
+        private final BitSet assigned;
+        private final Map<ValueSymbol, Integer> index;
+        private final List<ValueSymbol> unitializedVariables = new ArrayList<>();
 
-        public RuntimeWrappedCompilerException(CompilerException e) {
-            super(e);
-            this.inner = e;
+        private UnitializedVariableCollector(BitSet assigned, Map<ValueSymbol, Integer> index) {
+            this.assigned = assigned;
+            this.index = index;
+        }
+
+        public static List<ValueSymbol> collect(BoundExpression expr, BitSet assigned, Map<ValueSymbol, Integer> index) {
+            var collector = new UnitializedVariableCollector(assigned, index);
+            expr.accept(collector);
+
+            return collector.unitializedVariables;
+        }
+
+        @Override
+        public Void visitReferenceExpr(BoundReferenceExpr node) {
+            if (!(node instanceof BoundReferenceExpr.VariableRef vref)) {
+                return null;
+            }
+
+            var var = vref.getReferencedSymbol();
+            if (var.isGlobalVariable()) {
+                return null;
+            }
+
+            Integer idx = index.get(var);
+            if (idx == null) {
+                return null;
+            }
+
+            if (!assigned.get(idx)) {
+                unitializedVariables.add(var);
+            }
+
+            return null;
         }
     }
 }

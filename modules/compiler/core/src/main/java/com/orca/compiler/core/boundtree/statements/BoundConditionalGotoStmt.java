@@ -4,12 +4,14 @@ import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundLabel;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
+import com.orca.compiler.core.boundtree.BoundVisitor;
+import com.orca.compiler.core.boundtree.Child;
 
 public final class BoundConditionalGotoStmt extends BoundStatement {
 
     public final BoundLabel label;
     public final boolean inverseCondition;
-    public final BoundExpression condition;
+    @Child public final BoundExpression condition;
 
     public BoundConditionalGotoStmt(BoundLabel label, BoundExpression condition) {
         this(label, condition, true);
@@ -24,5 +26,10 @@ public final class BoundConditionalGotoStmt extends BoundStatement {
     @Override
     public BoundNodeKind kind() {
         return BoundNodeKind.CONDITIONAL_GOTO_STMT;
+    }
+
+    @Override
+    public <R> R accept(BoundVisitor<R> visitor) {
+        return visitor.visitConditionalGotoStmt(this);
     }
 }
