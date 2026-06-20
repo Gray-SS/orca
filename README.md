@@ -338,7 +338,7 @@ for (var i := 0; i < 10; i++) {
 | Operator | Meaning              |
 | -------- | -------------------- |
 | `==`     | Equal                |
-| `=/=`    | Not equal            |
+| `!=`     | Not equal            |
 | `<`      | Less than            |
 | `<=`     | Less than or equal   |
 | `>`      | Greater than         |
@@ -350,9 +350,7 @@ for (var i := 0; i < 10; i++) {
 | -------- | --------------- |
 | `&&`     | Logical and     |
 | `\|\|`   | Logical or      |
-| `not(x)` | Logical negation|
-
-There is no `!` operator; use `not()` instead.
+| `!x`     | Logical not     |
 
 ### Unary
 
@@ -391,7 +389,7 @@ def float abs(float x) {
 
 # test if a number is outside a range
 def bool outOfRange(int value, int lo, int hi) {
-    return not(value >= lo && value <= hi);
+    return !(value >= lo && value <= hi);
 }
 
 # clamp with compound assignment
@@ -411,11 +409,11 @@ Orca provides a small set of built-in functions available without any import.
 
 ### `not(bool) -> bool`
 
-Logical negation. Used in place of a `!` prefix operator.
+Logical negation. Equivalent to the `!` prefix operator.
 
 ```orca
-if (not(isReady())) { return; }
-while (not(done)) { ... }
+if (!isReady()) { return; }
+while (!done) { ... }
 ```
 
 ### `str(T) -> string`
@@ -491,7 +489,7 @@ import java::nio::file::Files;
 import java::nio::file::Path;
 
 let path := Path::of("data.txt");
-if (not(Files::exists(path))) {
+if (!Files::exists(path)) {
     std::io::println("File not found");
 }
 let content := Files::readString(path);
@@ -508,7 +506,7 @@ import com::raylib::Raylib;
 import com::raylib::Colors;
 
 Raylib::InitWindow(800, 600, "My App");
-while (not(Raylib::WindowShouldClose())) {
+while (!Raylib::WindowShouldClose()) {
     Raylib::BeginDrawing();
     Raylib::ClearBackground(Colors::RAYWHITE);
     Raylib::DrawText("Hello, Orca!", 10, 10, 20, Colors::BLACK);
