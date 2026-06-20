@@ -171,7 +171,7 @@ public class TestLexer {
         Object[][] cases = {
             {"=", TokenKind.Equals},
             {"==", TokenKind.DoubleEquals},
-            {"=/=", TokenKind.EqualsSlashEquals},
+            {"!=", TokenKind.BangEqual},
             {"+", TokenKind.Plus},
             {"-", TokenKind.Minus},
             {"*", TokenKind.Star},
@@ -191,7 +191,9 @@ public class TestLexer {
             {"]", TokenKind.RBracket},
             {".", TokenKind.Dot},
             {";", TokenKind.Semicolon},
-            {",", TokenKind.Comma},};
+            {",", TokenKind.Comma},
+            {"!", TokenKind.Bang}
+        };
         for (Object[] c : cases) {
             assertEquals("Failed for: " + c[0], c[1], next(lexerFor((String) c[0])).kind());
         }
