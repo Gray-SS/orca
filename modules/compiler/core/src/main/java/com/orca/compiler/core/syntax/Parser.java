@@ -477,7 +477,8 @@ public class Parser {
         while (true) {
             switch (tokenKind()) {
                 case PlusPlus, MinusMinus -> {
-                    expr = new AssignmentExpr(expr, nextToken(), null);
+                    var op = nextToken();
+                    expr = new UnaryAssignmentExpr(op, expr);
                 }
                 case Dot -> {
                     expr = parseMemberAccessExpr(expr);

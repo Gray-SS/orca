@@ -92,6 +92,15 @@ public class Lexer implements AutoCloseable {
         }
 
         switch (_nextCharacter) {
+            case '!' -> {
+                // Handle '!' and '!='
+                advance();
+                if (_nextCharacter == '=') {
+                    advance();
+                    return createSymbol(TokenKind.BangEqual, "!=");
+                }
+                return createSymbol(TokenKind.Bang, "!");
+            }
             case '"' -> {
                 return readStringLiteral();
             }
@@ -195,22 +204,12 @@ public class Lexer implements AutoCloseable {
                 return createSymbol(TokenKind.Comma, ",");
             }
             case '=' -> {
-                // Handle '=', '==', and '=/='
+                // Handle '=' and '=='
                 advance();
                 switch (_nextCharacter) {
                     case '=' -> {
                         advance();
                         return createSymbol(TokenKind.DoubleEquals, "==");
-                    }
-                    case '/' -> {
-                        advance();
-                        if (_nextCharacter == '=') {
-                            advance();
-                            return createSymbol(TokenKind.EqualsSlashEquals, "=/=");
-                        } else {
-                            _diagnostics.reportUnexpectedCharacterAfter(currentTokenSpan(), '=', (char) _nextCharacter);
-                            return badToken();
-                        }
                     }
                     default -> {
                         return createSymbol(TokenKind.Equals, "=");

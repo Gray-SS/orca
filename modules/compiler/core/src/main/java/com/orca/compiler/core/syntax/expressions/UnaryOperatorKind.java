@@ -3,15 +3,13 @@ package com.orca.compiler.core.syntax.expressions;
 import com.orca.compiler.core.lexer.TokenKind;
 
 public enum UnaryOperatorKind {
-
-    Increment,
-    Decrement,
+    Identity,
     Negation,
     LogicalNot;
 
     public static boolean isUnaryOperator(TokenKind kind) {
         return switch (kind) {
-            case PlusPlus, MinusMinus, Minus ->
+            case Plus, Minus, Bang ->
                 true;
             default ->
                 false;
@@ -20,12 +18,10 @@ public enum UnaryOperatorKind {
 
     public String getOperatorText() {
         return switch (this) {
+            case Identity ->
+                "+";
             case Negation ->
                 "-";
-            case Increment ->
-                "++";
-            case Decrement ->
-                "--";
             case LogicalNot ->
                 "not";
         };

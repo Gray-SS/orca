@@ -119,6 +119,8 @@ public sealed abstract class BoundNumericConstant extends BoundConstant permits
     @Override
     public BoundConstant applyUnaryOperator(BoundOperator.Unary operator) {
         return switch (operator.kind()) {
+            case Identity ->
+                this;
             case Negation ->
                 negate();
             default ->

@@ -11,6 +11,7 @@ import com.orca.compiler.core.syntax.expressions.InvocationExpr;
 import com.orca.compiler.core.syntax.expressions.LiteralExpr;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
 import com.orca.compiler.core.syntax.expressions.TypeTestExpr;
+import com.orca.compiler.core.syntax.expressions.UnaryAssignmentExpr;
 import com.orca.compiler.core.syntax.expressions.UnaryExpr;
 import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.ErrorMemberSyntax;
@@ -84,6 +85,11 @@ public abstract class SyntaxWalker extends SyntaxVisitor {
 
     @Override
     public void visitAssignmentExpr(AssignmentExpr syntax) {
+        defaultVisit(syntax);
+    }
+
+    @Override
+    public void visitUnaryAssignmentExpr(UnaryAssignmentExpr syntax) {
         defaultVisit(syntax);
     }
 

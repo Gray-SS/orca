@@ -38,6 +38,25 @@ public sealed abstract class BoundConstant permits
         };
     }
 
+    public static BoundNumericConstant one(LangType type) {
+        return switch (type.getPrimitiveKind()) {
+            case Byte ->
+                new BoundByteConstant((byte) 1);
+            case Short ->
+                new BoundShortConstant((short) 1);
+            case Int ->
+                new BoundIntConstant(1);
+            case Long ->
+                new BoundLongConstant(1L);
+            case Float ->
+                new BoundFloatConstant(1.0f);
+            case Double ->
+                new BoundDoubleConstant(1.0);
+            default ->
+                throw new IllegalArgumentException("Type '" + type + "' does not have a numeric constant representation.");
+        };
+    }
+
     public static BoundConstant getDefaultValue(LangType type) {
         return switch (type.getPrimitiveKind()) {
             case Byte ->

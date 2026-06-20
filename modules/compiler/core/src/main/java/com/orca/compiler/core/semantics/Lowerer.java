@@ -11,7 +11,6 @@ import com.orca.compiler.core.boundtree.BoundStatement;
 import com.orca.compiler.core.boundtree.BoundTreeRewriter;
 import com.orca.compiler.core.boundtree.BoundVariableDeclarator;
 import com.orca.compiler.core.boundtree.constants.BoundBoolConstant;
-import com.orca.compiler.core.boundtree.constants.BoundIntConstant;
 import com.orca.compiler.core.boundtree.expressions.BoundAssignmentExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundBinaryExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundLiteralExpr;
@@ -28,6 +27,7 @@ import com.orca.compiler.core.boundtree.statements.BoundWhileStmt;
 import com.orca.compiler.core.symbols.synthesized.SynthesizedVariableSymbol;
 import com.orca.compiler.core.syntax.expressions.AssignmentOperatorKind;
 import com.orca.compiler.core.syntax.expressions.BinaryOperatorKind;
+import com.orca.compiler.core.syntax.expressions.UnaryOperatorKind;
 import com.orca.compiler.core.text.SourceSpan;
 import com.orca.compiler.core.typesystem.LangType;
 
@@ -154,34 +154,34 @@ public final class Lowerer extends BoundTreeRewriter {
 
     @Override
     public BoundExpression rewriteAssignmentExpr(BoundAssignmentExpr node) {
-        // Lower compound assignments (e.g., a += b) to simple assignments (e.g., a = a + b)
-        if (node.operator().kind() != AssignmentOperatorKind.Simple) {
-            var span = node.span();
-            var left = rewriteExpression(node.targetExpr());
-            var right = rewriteExpression(node.valueExpr());
-
-            var binaryOperatorKind = switch (node.operator().kind()) {
-                case AdditionAssignment ->
-                    BinaryOperatorKind.Addition;
-                case SubtractionAssignment ->
-                    BinaryOperatorKind.Subtraction;
-                case MultiplicationAssignment ->
-                    BinaryOperatorKind.Multiplication;
-                case DivisionAssignment ->
-                    BinaryOperatorKind.Division;
-                case ModuloAssignment ->
-                    BinaryOperatorKind.Modulo;
-                case Simple ->
-                    throw new IllegalStateException("Unexpected simple assignment operator in compound assignment rewrite.");
-            };
-
-            var boundOperator = BoundOperators.bindBinaryOperatorOrThrow(binaryOperatorKind, left.type(), right.type());
-            var binaryExpr = new BoundBinaryExpr(boundOperator, left, right);
-
-            return BoundNodeFactory.synthesizedSimpleAssignment(span, node.targetExpr(), binaryExpr);
+        if (node.operator().kind() == AssignmentOperatorKind.Simple) {
+            return super.rewriteAssignmentExpr(node);
         }
 
-        return super.rewriteAssignmentExpr(node);
+        // Lower compound assignments (e.g., a += b) to simple assignments (e.g., a = a + b)
+        var span = node.span();
+        var left = rewriteExpression(node.targetExpr());
+        var right = rewriteExpression(node.valueExpr());
+
+        var binaryOperatorKind = switch (node.operator().kind()) {
+            case AdditionAssignment ->
+                BinaryOperatorKind.Addition;
+            case SubtractionAssignment ->
+                BinaryOperatorKind.Subtraction;
+            case MultiplicationAssignment ->
+                BinaryOperatorKind.Multiplication;
+            case DivisionAssignment ->
+                BinaryOperatorKind.Division;
+            case ModuloAssignment ->
+                BinaryOperatorKind.Modulo;
+            case Simple ->
+                throw new IllegalStateException("Unexpected simple assignment operator in compound assignment rewrite.");
+        };
+
+        var boundOperator = BoundOperators.bindBinaryOperatorOrThrow(binaryOperatorKind, left.type(), right.type());
+        var binaryExpr = new BoundBinaryExpr(boundOperator, left, right);
+
+        return BoundNodeFactory.synthesizedSimpleAssignment(span, node.targetExpr(), binaryExpr);
     }
 
     @Override
@@ -249,29 +249,12 @@ public final class Lowerer extends BoundTreeRewriter {
     @Override
     public BoundExpression rewriteUnaryExpr(BoundUnaryExpr node) {
         var operatorKind = node.operator.kind();
-        switch (operatorKind) {
-            case Increment -> {
-                // a++ is lowered to: a = a + 1
-                var span = node.span();
-                var operand = rewriteExpression(node.operand);
-                var one = new BoundLiteralExpr(new BoundIntConstant(1));
-                var boundOperator = BoundOperators.bindBinaryOperatorOrThrow(BinaryOperatorKind.Addition, operand.type(), one.type());
-                var addition = new BoundBinaryExpr(boundOperator, operand, one);
-                return BoundNodeFactory.synthesizedSimpleAssignment(span, (BoundReferenceExpr) node.operand, addition);
-            }
-            case Decrement -> {
-                // a-- is lowered to: a = a - 1
-                var span = node.span();
-                var operand = rewriteExpression(node.operand);
-                var one = new BoundLiteralExpr(new BoundIntConstant(1));
-                var boundOperator = BoundOperators.bindBinaryOperatorOrThrow(BinaryOperatorKind.Subtraction, operand.type(), one.type());
-                var subtraction = new BoundBinaryExpr(boundOperator, operand, one);
-                return BoundNodeFactory.synthesizedSimpleAssignment(span, (BoundReferenceExpr) node.operand, subtraction);
-            }
-            default -> {
-                return super.rewriteUnaryExpr(node);
-            }
+        if (operatorKind == UnaryOperatorKind.Identity) {
+            // +a is lowered to: a
+            return rewriteExpression(node.operand);
         }
+
+        return super.rewriteUnaryExpr(node);
     }
 
     private BoundLabel generateLabel(String prefix) {

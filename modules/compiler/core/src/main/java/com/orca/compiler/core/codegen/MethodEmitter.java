@@ -624,7 +624,10 @@ public final class MethodEmitter {
 
     private void emitUnary(MethodVisitor mv, BoundUnaryExpr un) {
         switch (un.operator.kind()) {
-            case Negation, Increment, Decrement -> {
+            case Identity -> {
+                emitExpr(mv, un.operand);
+            }
+            case Negation -> {
                 emitExpr(mv, un.operand);
                 mv.visitInsn(unaryArithmeticOpcode(un.operator.kind(), JvmCategory.of(un.operand.type())));
             }
@@ -671,8 +674,6 @@ public final class MethodEmitter {
                     case REFERENCE ->
                         throw new IllegalStateException("Reference types should be handled differently");
                 };
-            case Increment, Decrement ->
-                throw new IllegalStateException("Increment/decrement should have been desugared into addition/subtraction in the lowering phase and should not appear in codegen input: " + op);
             default ->
                 throw new IllegalStateException("Unexpected unary arithmetic operator: " + op);
         };

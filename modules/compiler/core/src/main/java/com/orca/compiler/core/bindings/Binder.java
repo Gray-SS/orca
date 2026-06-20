@@ -16,6 +16,7 @@ import com.orca.compiler.core.boundtree.BoundNode;
 import com.orca.compiler.core.boundtree.BoundStatement;
 import com.orca.compiler.core.boundtree.BoundVariableDeclarator;
 import com.orca.compiler.core.boundtree.ConstantFolding;
+import com.orca.compiler.core.boundtree.constants.BoundConstant;
 import com.orca.compiler.core.boundtree.constants.BoundIntConstant;
 import com.orca.compiler.core.boundtree.expressions.BoundArrayAccessExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundArrayLiteralExpr;
@@ -54,13 +55,17 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.expressions.ArrayAccessExpr;
 import com.orca.compiler.core.syntax.expressions.ArrayLiteralExpression;
 import com.orca.compiler.core.syntax.expressions.AssignmentExpr;
+import com.orca.compiler.core.syntax.expressions.AssignmentOperatorKind;
 import com.orca.compiler.core.syntax.expressions.BinaryExpr;
+import com.orca.compiler.core.syntax.expressions.BinaryOperatorKind;
 import com.orca.compiler.core.syntax.expressions.ErrorExpressionSyntax;
 import com.orca.compiler.core.syntax.expressions.IdentifierExpr;
 import com.orca.compiler.core.syntax.expressions.InvocationExpr;
 import com.orca.compiler.core.syntax.expressions.LiteralExpr;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
+import com.orca.compiler.core.syntax.expressions.UnaryAssignmentExpr;
 import com.orca.compiler.core.syntax.expressions.UnaryExpr;
+import com.orca.compiler.core.syntax.expressions.UnaryOperatorKind;
 import com.orca.compiler.core.syntax.nodes.IdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.QualifiedIdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.SimpleIdentifierSyntax;
@@ -419,6 +424,8 @@ public abstract class Binder {
                 bindInvocationExpr(e, null);
             case AssignmentExpr e ->
                 bindAssignmentExpr(e);
+            case UnaryAssignmentExpr e ->
+                bindUnaryAssignmentExpr(e);
             case MemberAccessExpr e ->
                 bindMemberAccessExpr(e);
             case ArrayLiteralExpression e ->
@@ -522,10 +529,27 @@ public abstract class Binder {
 
     protected BoundAssignmentExpr bindAssignmentExpr(AssignmentExpr expr) throws CompilerException {
         var boundTarget = bindExpr(expr.target());
+        var boundInitializer = bindExpectedExpr(expr.initializer(), boundTarget.type());
         checkAssignmentTarget(boundTarget);
 
-        var boundInitializer = bindExpectedExpr(expr.initializer(), boundTarget.type());
-        var boundAssignmentOperatorResult = BoundOperators.bindAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundInitializer.type());
+        var assignmentOperatorKind = switch (expr.operatorToken().kind()) {
+            case Equals ->
+                AssignmentOperatorKind.Simple;
+            case PlusEquals ->
+                AssignmentOperatorKind.AdditionAssignment;
+            case MinusEquals ->
+                AssignmentOperatorKind.SubtractionAssignment;
+            case StarEquals ->
+                AssignmentOperatorKind.MultiplicationAssignment;
+            case SlashEquals ->
+                AssignmentOperatorKind.DivisionAssignment;
+            case PercentEquals ->
+                AssignmentOperatorKind.ModuloAssignment;
+            default ->
+                throw SemanticErrors.unsupportedAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundInitializer.type());
+        };
+
+        var boundAssignmentOperatorResult = BoundOperators.bindAssignmentOperator(assignmentOperatorKind, boundTarget.type(), boundInitializer.type());
 
         return switch (boundAssignmentOperatorResult.kind()) {
             case SINGLE_MATCH -> {
@@ -537,6 +561,40 @@ public abstract class Binder {
             }
             case NO_MATCH -> {
                 throw SemanticErrors.unsupportedAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundInitializer.type());
+            }
+        };
+    }
+
+    private BoundAssignmentExpr bindUnaryAssignmentExpr(UnaryAssignmentExpr expr) throws CompilerException {
+        var boundTarget = bindExpr(expr.operand());
+        checkAssignmentTarget(boundTarget);
+
+        var assignmentOperatorKind = switch (expr.operatorToken().kind()) {
+            case PlusPlus ->
+                AssignmentOperatorKind.AdditionAssignment;
+            case MinusMinus ->
+                AssignmentOperatorKind.SubtractionAssignment;
+            default ->
+                throw SemanticErrors.unsupportedAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundTarget.type());
+        };
+
+        var boundConstant = BoundConstant.one(boundTarget.type());
+        if (assignmentOperatorKind == AssignmentOperatorKind.SubtractionAssignment) {
+            boundConstant = boundConstant.negate();
+        }
+
+        var boundAssignmentOperatorResult = BoundOperators.bindAssignmentOperator(assignmentOperatorKind, boundTarget.type(), boundConstant.type());
+
+        return switch (boundAssignmentOperatorResult.kind()) {
+            case SINGLE_MATCH -> {
+                var boundOperator = boundAssignmentOperatorResult.getSingle();
+                yield new BoundAssignmentExpr(boundTarget, boundOperator, new BoundLiteralExpr(boundConstant));
+            }
+            case AMBIGUOUS -> {
+                throw SemanticErrors.ambiguousAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundTarget.type(), boundAssignmentOperatorResult.getCandidates());
+            }
+            case NO_MATCH -> {
+                throw SemanticErrors.unsupportedAssignmentOperator(expr.operatorToken(), boundTarget.type(), boundTarget.type());
             }
         };
     }
@@ -670,7 +728,18 @@ public abstract class Binder {
         var boundOperand = bindValueExpr(expr.operand());
         var boundOperandType = boundOperand.type();
 
-        var boundOperatorResult = BoundOperators.bindUnaryOperator(expr.operatorToken(), boundOperandType);
+        var unaryOperatorKind = switch (expr.operatorToken().kind()) {
+            case Plus ->
+                UnaryOperatorKind.Identity;
+            case Minus ->
+                UnaryOperatorKind.Negation;
+            case Bang ->
+                UnaryOperatorKind.LogicalNot;
+            default ->
+                throw SemanticErrors.unsupportedUnaryOperator(expr.operatorToken(), boundOperandType);
+        };
+
+        var boundOperatorResult = BoundOperators.bindUnaryOperator(unaryOperatorKind, boundOperandType);
         return switch (boundOperatorResult.kind()) {
             case SINGLE_MATCH -> {
                 var boundOperator = boundOperatorResult.getSingle();
@@ -691,7 +760,40 @@ public abstract class Binder {
         var leftType = boundLeft.type();
         var rightType = boundRight.type();
 
-        var boundOperatorResult = BoundOperators.bindBinaryOperator(expr.operatorToken(), leftType, rightType);
+        var binaryOperatorKind = switch (expr.operatorToken().kind()) {
+            case Plus ->
+                leftType.isString() || rightType.isString()
+                ? BinaryOperatorKind.StringConcatenation
+                : BinaryOperatorKind.Addition;
+            case Minus ->
+                BinaryOperatorKind.Subtraction;
+            case Star ->
+                BinaryOperatorKind.Multiplication;
+            case Slash ->
+                BinaryOperatorKind.Division;
+            case Percent ->
+                BinaryOperatorKind.Modulo;
+            case DoubleEquals ->
+                BinaryOperatorKind.Equal;
+            case BangEqual ->
+                BinaryOperatorKind.NotEqual;
+            case LessThan ->
+                BinaryOperatorKind.LessThan;
+            case LessThanEq ->
+                BinaryOperatorKind.LessThanOrEqual;
+            case GreaterThan ->
+                BinaryOperatorKind.GreaterThan;
+            case GreaterThanEq ->
+                BinaryOperatorKind.GreaterThanOrEqual;
+            case DoubleAmpersand ->
+                BinaryOperatorKind.LogicalAnd;
+            case DoublePipe ->
+                BinaryOperatorKind.LogicalOr;
+            default ->
+                throw SemanticErrors.unsupportedBinaryOperator(expr.operatorToken(), leftType, rightType);
+        };
+
+        var boundOperatorResult = BoundOperators.bindBinaryOperator(binaryOperatorKind, leftType, rightType);
         return switch (boundOperatorResult.kind()) {
             case SINGLE_MATCH -> {
                 var boundOperator = boundOperatorResult.getSingle();

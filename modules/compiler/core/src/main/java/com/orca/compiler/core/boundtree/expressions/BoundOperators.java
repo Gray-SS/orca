@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orca.compiler.core.semantics.LookupResult;
-import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.expressions.AssignmentOperatorKind;
 import com.orca.compiler.core.syntax.expressions.BinaryOperatorKind;
 import com.orca.compiler.core.syntax.expressions.UnaryOperatorKind;
@@ -20,15 +19,6 @@ public final class BoundOperators {
     private static final List<BoundOperator.Binary> binaryOperators = initializeBinaryOperators();
     private static final List<BoundOperator.Unary> unaryOperators = initializeUnaryOperators();
 
-    public static BoundOperator.Binary bindBinaryOperatorOrThrow(SyntaxToken operatorToken, LangType leftType, LangType rightType) {
-        var result = bindBinaryOperator(operatorToken, leftType, rightType);
-        if (result.isSingleMatch()) {
-            return result.getSingle();
-        }
-
-        throw new IllegalArgumentException("Binary operator '" + operatorToken.text() + "' is not defined for types '" + leftType + "' and '" + rightType + "'");
-    }
-
     public static BoundOperator.Binary bindBinaryOperatorOrThrow(BinaryOperatorKind operatorKind, LangType leftType, LangType rightType) {
         var result = bindBinaryOperator(operatorKind, leftType, rightType);
         if (result.isSingleMatch()) {
@@ -38,46 +28,42 @@ public final class BoundOperators {
         throw new IllegalArgumentException("Binary operator '" + operatorKind.getOperatorText() + "' is not defined for types '" + leftType + "' and '" + rightType + "'");
     }
 
-    public static LookupResult<BoundOperator.Binary> bindBinaryOperator(SyntaxToken operatorToken, LangType leftType, LangType rightType) {
-        return bind(binaryOperators, operatorToken.text(), List.of(leftType, rightType));
-    }
-
     public static LookupResult<BoundOperator.Binary> bindBinaryOperator(BinaryOperatorKind operatorKind, LangType leftType, LangType rightType) {
-        return bind(binaryOperators, operatorKind.getOperatorText(), List.of(leftType, rightType));
+        return bind(binaryOperators, operatorKind, List.of(leftType, rightType));
     }
 
-    public static BoundOperator.Unary bindUnaryOperatorOrThrow(SyntaxToken operatorToken, LangType operandType) {
-        var result = bindUnaryOperator(operatorToken, operandType);
+    public static BoundOperator.Unary bindUnaryOperatorOrThrow(UnaryOperatorKind operatorKind, LangType operandType) {
+        var result = bindUnaryOperator(operatorKind, operandType);
         if (result.isSingleMatch()) {
             return result.getSingle();
         }
 
-        throw new IllegalArgumentException("Unary operator '" + operatorToken.text() + "' is not defined for type '" + operandType + "'");
+        throw new IllegalArgumentException("Unary operator '" + operatorKind.getOperatorText() + "' is not defined for type '" + operandType + "'");
     }
 
-    public static LookupResult<BoundOperator.Unary> bindUnaryOperator(SyntaxToken operatorToken, LangType operandType) {
-        return bind(unaryOperators, operatorToken.text(), List.of(operandType));
+    public static LookupResult<BoundOperator.Unary> bindUnaryOperator(UnaryOperatorKind operatorKind, LangType operandType) {
+        return bind(unaryOperators, operatorKind, List.of(operandType));
     }
 
-    public static BoundOperator.Assignment bindAssignmentOperatorOrThrow(SyntaxToken operatorToken, LangType leftType, LangType rightType) {
-        var result = bindAssignmentOperator(operatorToken, leftType, rightType);
+    public static BoundOperator.Assignment bindAssignmentOperatorOrThrow(AssignmentOperatorKind operatorKind, LangType leftType, LangType rightType) {
+        var result = bindAssignmentOperator(operatorKind, leftType, rightType);
         if (result.isSingleMatch()) {
             return result.getSingle();
         }
 
-        throw new IllegalArgumentException("Assignment operator '" + operatorToken.text() + "' is not defined for types '" + leftType + "' and '" + rightType + "'");
+        throw new IllegalArgumentException("Assignment operator '" + operatorKind.getOperatorText() + "' is not defined for types '" + leftType + "' and '" + rightType + "'");
     }
 
-    public static LookupResult<BoundOperator.Assignment> bindAssignmentOperator(SyntaxToken operatorToken, LangType leftType, LangType rightType) {
-        return bind(assignmentOperators, operatorToken.text(), List.of(leftType, rightType));
+    public static LookupResult<BoundOperator.Assignment> bindAssignmentOperator(AssignmentOperatorKind operatorKind, LangType leftType, LangType rightType) {
+        return bind(assignmentOperators, operatorKind, List.of(leftType, rightType));
     }
 
-    private static <T extends BoundOperator> LookupResult<T> bind(List<T> operators, String operatorText, List<LangType> argumentTypes) {
+    private static <T extends BoundOperator> LookupResult<T> bind(List<T> operators, Enum<?> operatorKind, List<LangType> argumentTypes) {
         int minimalCost = Conversions.INCOMPATIBLE_COST;
         List<T> foundCandidates = new java.util.ArrayList<>();
 
         for (T candidate : operators) {
-            if (!candidate.getOperatorText().equals(operatorText)) {
+            if (!candidate.kind().equals(operatorKind)) {
                 continue; // Operator text mismatch, skip candidate
             }
 
@@ -113,8 +99,7 @@ public final class BoundOperators {
     private static List<BoundOperator.Unary> initializeUnaryOperators() {
         var result = new ArrayList<BoundOperator.Unary>();
         for (var type : LangType.getNumericTypes()) {
-            result.add(new BoundOperator.Unary(UnaryOperatorKind.Increment, type, type));
-            result.add(new BoundOperator.Unary(UnaryOperatorKind.Decrement, type, type));
+            result.add(new BoundOperator.Unary(UnaryOperatorKind.Identity, type, type));
             result.add(new BoundOperator.Unary(UnaryOperatorKind.Negation, type, type));
         }
 

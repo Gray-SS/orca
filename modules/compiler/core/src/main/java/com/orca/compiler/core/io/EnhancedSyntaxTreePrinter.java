@@ -20,6 +20,7 @@ import com.orca.compiler.core.syntax.expressions.InvocationExpr;
 import com.orca.compiler.core.syntax.expressions.LiteralExpr;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
 import com.orca.compiler.core.syntax.expressions.TypeTestExpr;
+import com.orca.compiler.core.syntax.expressions.UnaryAssignmentExpr;
 import com.orca.compiler.core.syntax.expressions.UnaryExpr;
 import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.ErrorMemberSyntax;
@@ -305,6 +306,13 @@ public final class EnhancedSyntaxTreePrinter {
         public void visitAssignmentExpr(AssignmentExpr assignStmt) {
             String where = assignStmt.loc().toString();
             printLine("AssignmentStmt" + (where.isEmpty() ? "" : (" " + where)));
+        }
+
+        @Override
+        public void visitUnaryAssignmentExpr(UnaryAssignmentExpr syntax) {
+            String symbol = syntax.operatorToken().text();
+            String where = syntax.loc().toString();
+            printLine("UnaryAssignmentStmt " + q(symbol) + (where.isEmpty() ? "" : (" " + where)));
         }
 
         @Override

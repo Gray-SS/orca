@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orca.compiler.core.CompilerException;
-import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNode;
 import com.orca.compiler.core.boundtree.expressions.BoundAssignmentExpr;
-import com.orca.compiler.core.boundtree.expressions.BoundUnaryExpr;
 import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.boundtree.statements.BoundForStmt;
 import com.orca.compiler.core.semantics.SemanticErrors;
@@ -15,7 +13,6 @@ import com.orca.compiler.core.symbols.Symbol;
 import com.orca.compiler.core.symbols.ValueSymbol;
 import com.orca.compiler.core.symbols.sources.SourceVariableSymbol;
 import com.orca.compiler.core.syntax.SyntaxNode;
-import com.orca.compiler.core.syntax.expressions.UnaryOperatorKind;
 import com.orca.compiler.core.syntax.statements.ForStmt;
 
 public final class ForBinder extends LocalBinder {
@@ -73,26 +70,12 @@ public final class ForBinder extends LocalBinder {
 
         // Step must be compatible with loopVarType (e.g. i++).
         var boundStepExpr = bindExpectedExpr(syntax.stepExpr(), loopVariable.type());
-        checkStepExpr(boundStepExpr);
+        if (!(boundStepExpr instanceof BoundAssignmentExpr)) {
+            throw SemanticErrors.forLoopStepMustBeAssignment(syntax.stepExpr());
+        }
 
         BoundBlockStmt boundBlock = BlockBinder.bindBlock(this, stmt.body());
 
         return new BoundForStmt(loopVariableDeclarator, boundConditionExpr, boundStepExpr, boundBlock);
-    }
-
-    private void checkStepExpr(BoundExpression stepExpr) throws CompilerException {
-        if (stepExpr instanceof BoundAssignmentExpr) {
-            return;
-        }
-
-        if (stepExpr instanceof BoundUnaryExpr unaryExpr) {
-            // TODO: Move Increment and Decrement operations to assignment expressions, and remove this special handling for unary expressions.
-            var operatorKind = unaryExpr.operator.kind();
-            if (operatorKind == UnaryOperatorKind.Increment || operatorKind == UnaryOperatorKind.Decrement) {
-                return;
-            }
-        }
-
-        throw SemanticErrors.forLoopStepMustBeAssignment(syntax.stepExpr());
     }
 }

@@ -11,6 +11,7 @@ import com.orca.compiler.core.syntax.expressions.InvocationExpr;
 import com.orca.compiler.core.syntax.expressions.LiteralExpr;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
 import com.orca.compiler.core.syntax.expressions.TypeTestExpr;
+import com.orca.compiler.core.syntax.expressions.UnaryAssignmentExpr;
 import com.orca.compiler.core.syntax.expressions.UnaryExpr;
 import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.ErrorMemberSyntax;
@@ -72,8 +73,6 @@ public abstract class SyntaxVisitor {
 
     public abstract void visitReturnStmt(ReturnStmt syntax);
 
-    public abstract void visitAssignmentExpr(AssignmentExpr syntax);
-
     public abstract void visitBlockStmt(BlockStmt syntax);
 
     public abstract void visitExpressionStmt(ExpressionStmt syntax);
@@ -88,6 +87,10 @@ public abstract class SyntaxVisitor {
     public abstract void visitIdentifierExpr(IdentifierExpr syntax);
 
     public abstract void visitInvocationExpr(InvocationExpr syntax);
+
+    public abstract void visitAssignmentExpr(AssignmentExpr syntax);
+
+    public abstract void visitUnaryAssignmentExpr(UnaryAssignmentExpr syntax);
 
     public abstract void visitMemberAccessExpr(MemberAccessExpr syntax);
 

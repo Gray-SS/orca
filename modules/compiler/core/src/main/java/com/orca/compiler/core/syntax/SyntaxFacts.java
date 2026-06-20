@@ -77,7 +77,7 @@ public class SyntaxFacts {
         };
     }
 
-    public static boolean isUnaryPostfixAssignmentOperator(TokenKind kind) {
+    public static boolean isUnaryAssignmentOperator(TokenKind kind) {
         return switch (kind) {
             case PlusPlus, MinusMinus ->
                 true;
@@ -97,7 +97,7 @@ public class SyntaxFacts {
 
     public static boolean isBinaryOperator(TokenKind kind) {
         return switch (kind) {
-            case Plus, Minus, Star, Slash, Percent, DoubleEquals, EqualsSlashEquals, LessThan, LessThanEq, GreaterThan, GreaterThanEq, DoubleAmpersand, DoublePipe ->
+            case Plus, Minus, Star, Slash, Percent, DoubleEquals, BangEqual, LessThan, LessThanEq, GreaterThan, GreaterThanEq, DoubleAmpersand, DoublePipe ->
                 true;
             default ->
                 false;
@@ -110,7 +110,7 @@ public class SyntaxFacts {
                 1;
             case DoubleAmpersand ->
                 2;
-            case DoubleEquals, EqualsSlashEquals, LessThan, LessThanEq, GreaterThan, GreaterThanEq ->
+            case DoubleEquals, BangEqual, LessThan, LessThanEq, GreaterThan, GreaterThanEq ->
                 3;
             case Plus, Minus ->
                 4;

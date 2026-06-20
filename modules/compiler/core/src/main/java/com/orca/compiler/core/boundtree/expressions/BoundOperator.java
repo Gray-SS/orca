@@ -11,6 +11,8 @@ import com.orca.compiler.core.typesystem.LangType;
 public sealed interface BoundOperator
         permits BoundOperator.Unary, BoundOperator.Binary, BoundOperator.Assignment {
 
+    Enum<?> kind();
+
     LangType resultType();
 
     List<LangType> operandTypes();
