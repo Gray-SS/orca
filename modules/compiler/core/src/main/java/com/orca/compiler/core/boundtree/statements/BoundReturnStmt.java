@@ -7,6 +7,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BoundReturnStmt extends BoundStatement {
+
     @Nullable
     public final BoundExpression expression;
 

@@ -5,6 +5,7 @@ import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.syntax.statements.BlockStmt;
 
 public final class BlockBinder extends LocalBinder {
+
     public BlockBinder(Binder parent) {
         super(parent);
     }

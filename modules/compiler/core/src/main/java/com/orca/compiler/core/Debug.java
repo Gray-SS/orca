@@ -4,6 +4,7 @@ import com.orca.compiler.core.io.AnsiColor;
 import com.orca.compiler.core.io.AnsiConsole;
 
 public final class Debug {
+
     public static void log(String message) {
         System.out.println("DEBUG: " + message);
     }

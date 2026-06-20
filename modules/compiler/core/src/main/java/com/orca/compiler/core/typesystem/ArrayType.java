@@ -3,6 +3,7 @@ package com.orca.compiler.core.typesystem;
 import java.util.Objects;
 
 public final class ArrayType extends BaseType {
+
     @Deprecated
     public final LangType elementType;
 

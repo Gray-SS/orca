@@ -10,6 +10,7 @@ import com.orca.compiler.core.symbols.SymbolKind;
 import com.orca.compiler.core.syntax.SyntaxNode;
 
 public final class SourceNamespaceSymbol implements SourceSymbol, NamespaceSymbol {
+
     private final String name;
     private final SyntaxNode declaringSyntax;
     private final NamespaceSymbol ownerNamespace;
@@ -30,7 +31,7 @@ public final class SourceNamespaceSymbol implements SourceSymbol, NamespaceSymbo
     @Override
     public int getModifiers() {
         return SourceSymbol.super.getModifiers()
-            | NamespaceSymbol.super.getModifiers();
+                | NamespaceSymbol.super.getModifiers();
     }
 
     @Override

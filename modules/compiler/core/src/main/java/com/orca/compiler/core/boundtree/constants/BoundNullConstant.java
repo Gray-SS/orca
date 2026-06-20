@@ -3,6 +3,7 @@ package com.orca.compiler.core.boundtree.constants;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundNullConstant extends BoundConstant {
+
     @Override
     public LangType type() {
         return LangType.Unknown;

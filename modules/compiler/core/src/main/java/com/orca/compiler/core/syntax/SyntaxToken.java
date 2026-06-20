@@ -7,6 +7,7 @@ import com.orca.compiler.core.lexer.TokenKind;
 import com.orca.compiler.core.text.SourceSpan;
 
 public class SyntaxToken extends SyntaxNode {
+
     public final Token token;
 
     public SyntaxToken(Token token) {

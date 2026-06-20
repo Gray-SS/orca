@@ -3,6 +3,7 @@ package com.orca.compiler.core.text;
 import com.orca.compiler.core.symbols.synthesized.SynthesizedSymbol;
 
 public final class SynthesizedLocation implements Location {
+
     private final SynthesizedSymbol symbol;
 
     public SynthesizedLocation(SynthesizedSymbol symbol) {

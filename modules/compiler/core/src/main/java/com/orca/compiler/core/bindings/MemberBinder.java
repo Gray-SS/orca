@@ -9,6 +9,7 @@ import com.orca.compiler.core.symbols.Symbol;
 import com.orca.compiler.core.symbols.TypeSymbol;
 
 public class MemberBinder extends Binder {
+
     private final NamespaceOrTypeSymbol owner;
 
     public MemberBinder(Binder parent, NamespaceOrTypeSymbol owner) {
@@ -17,7 +18,9 @@ public class MemberBinder extends Binder {
     }
 
     /**
-     * Gets the namespace or type that owns the members being bound by this binder.
+     * Gets the namespace or type that owns the members being bound by this
+     * binder.
+     *
      * @return The owning namespace or type symbol.
      */
     public NamespaceOrTypeSymbol getOwnerSymbol() {
@@ -25,7 +28,8 @@ public class MemberBinder extends Binder {
     }
 
     @Override
-    public @Nullable Symbol lookupSymbol(String name) {
+    public @Nullable
+    Symbol lookupSymbol(String name) {
         Symbol member;
         if (owner instanceof TypeSymbol typeSymbol) {
             member = typeSymbol.getMemberWithExtensions(name);

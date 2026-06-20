@@ -10,7 +10,5 @@ public enum PrimitiveTypeKind {
     Double,
     Long,
     Char,
-    String,
-
-    ;
+    String,;
 }

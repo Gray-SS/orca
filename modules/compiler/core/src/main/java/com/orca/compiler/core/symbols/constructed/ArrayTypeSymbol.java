@@ -4,6 +4,7 @@ import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class ArrayTypeSymbol extends ConstructedTypeSymbol {
+
     private final TypeSymbol elementType;
 
     public ArrayTypeSymbol(TypeSymbol elementType) {

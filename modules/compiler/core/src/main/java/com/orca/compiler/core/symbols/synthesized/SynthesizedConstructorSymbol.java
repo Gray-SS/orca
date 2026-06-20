@@ -8,6 +8,7 @@ import com.orca.compiler.core.symbols.ParameterSymbol;
 import com.orca.compiler.core.symbols.TypeSymbol;
 
 public final class SynthesizedConstructorSymbol extends ConstructorSymbol implements SynthesizedSymbol {
+
     private final List<? extends ParameterSymbol> parameters;
 
     public SynthesizedConstructorSymbol(TypeSymbol owner, List<? extends ParameterSymbol> parameters) {
@@ -24,6 +25,6 @@ public final class SynthesizedConstructorSymbol extends ConstructorSymbol implem
     @Override
     public int getModifiers() {
         return super.getModifiers()
-            | SynthesizedSymbol.super.getModifiers();
+                | SynthesizedSymbol.super.getModifiers();
     }
 }

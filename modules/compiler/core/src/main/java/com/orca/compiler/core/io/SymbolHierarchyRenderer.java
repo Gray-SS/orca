@@ -8,6 +8,7 @@ import com.orca.compiler.core.symbols.NamespaceSymbol;
 import com.orca.compiler.core.symbols.Symbol;
 
 public final class SymbolHierarchyRenderer {
+
     public static void render(NamespaceSymbol globalNamespace, int indentSize) {
         render(globalNamespace, 0, indentSize);
     }

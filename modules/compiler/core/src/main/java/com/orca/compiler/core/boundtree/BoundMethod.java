@@ -10,6 +10,7 @@ import com.orca.compiler.core.symbols.ParameterSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundMethod extends BoundNode {
+
     private final BoundNode owner;
     private final BoundBlockStmt body;
     private final MethodSymbol symbol;

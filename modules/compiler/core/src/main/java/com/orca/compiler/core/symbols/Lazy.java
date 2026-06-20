@@ -3,6 +3,7 @@ package com.orca.compiler.core.symbols;
 import java.util.function.Supplier;
 
 public final class Lazy<T> {
+
     private final Supplier<T> resolver;
     private ResolutionState state = ResolutionState.UNRESOLVED;
     private T resolved = null;
@@ -12,11 +13,13 @@ public final class Lazy<T> {
     }
 
     public T resolve() {
-        if (state == ResolutionState.RESOLVING)
+        if (state == ResolutionState.RESOLVING) {
             throw new IllegalStateException("Cycle detected while resolving lazy value");
+        }
 
-        if (state == ResolutionState.RESOLVED)
+        if (state == ResolutionState.RESOLVED) {
             return resolved;
+        }
 
         state = ResolutionState.RESOLVING;
         resolved = resolver.get();

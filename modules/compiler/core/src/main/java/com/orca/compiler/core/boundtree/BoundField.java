@@ -3,6 +3,7 @@ package com.orca.compiler.core.boundtree;
 import com.orca.compiler.core.symbols.FieldSymbol;
 
 public class BoundField extends BoundNode {
+
     private final FieldSymbol fieldSymbol;
     private final BoundType owner;
 

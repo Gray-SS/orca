@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.nodes.IdentifierSyntax;
 
 public class IdentifierExpr extends ExpressionSyntax {
+
     private final IdentifierSyntax identifier;
 
     public IdentifierExpr(IdentifierSyntax identifier) {
@@ -13,6 +14,7 @@ public class IdentifierExpr extends ExpressionSyntax {
 
     /**
      * Gets the identifier syntax of this identifier expression.
+     *
      * @return The identifier syntax of this identifier expression.
      */
     public IdentifierSyntax identifier() {

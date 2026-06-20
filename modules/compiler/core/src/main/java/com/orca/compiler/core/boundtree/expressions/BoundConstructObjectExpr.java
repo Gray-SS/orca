@@ -9,6 +9,7 @@ import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundConstructObjectExpr extends BoundExpression {
+
     private final ConstructorSymbol constructor;
     private final List<BoundExpression> arguments;
 
@@ -18,24 +19,33 @@ public final class BoundConstructObjectExpr extends BoundExpression {
     }
 
     /**
-     * Gets the constructor symbol being invoked by this object construction expression.
-     * @return The constructor symbol being invoked by this object construction expression.
+     * Gets the constructor symbol being invoked by this object construction
+     * expression.
+     *
+     * @return The constructor symbol being invoked by this object construction
+     * expression.
      */
     public ConstructorSymbol getConstructor() {
         return constructor;
     }
 
     /**
-     * Gets the type symbol of the object being constructed by this object construction expression.
-     * @return The type symbol of the object being constructed by this object construction expression.
+     * Gets the type symbol of the object being constructed by this object
+     * construction expression.
+     *
+     * @return The type symbol of the object being constructed by this object
+     * construction expression.
      */
     public TypeSymbol getConstructedType() {
         return constructor.owner();
     }
 
     /**
-     * Gets the list of bound expressions representing the arguments passed to the constructor in this object construction expression.
-     * @return The list of bound expressions representing the arguments passed to the constructor in this object construction expression.
+     * Gets the list of bound expressions representing the arguments passed to
+     * the constructor in this object construction expression.
+     *
+     * @return The list of bound expressions representing the arguments passed
+     * to the constructor in this object construction expression.
      */
     public List<BoundExpression> getArguments() {
         return arguments;

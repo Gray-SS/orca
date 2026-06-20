@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.types.TypeSyntax;
 
 public class ArrayLiteralExpression extends ExpressionSyntax {
+
     private final TypeSyntax elementType;
     private final ExpressionSyntax length;
 
@@ -15,6 +16,7 @@ public class ArrayLiteralExpression extends ExpressionSyntax {
 
     /**
      * Gets the syntax of the element type of this array literal expression.
+     *
      * @return The syntax of the element type of this array literal expression.
      */
     public TypeSyntax elementType() {
@@ -23,6 +25,7 @@ public class ArrayLiteralExpression extends ExpressionSyntax {
 
     /**
      * Gets the syntax of the length of this array literal expression.
+     *
      * @return The syntax of the length of this array literal expression.
      */
     public ExpressionSyntax length() {

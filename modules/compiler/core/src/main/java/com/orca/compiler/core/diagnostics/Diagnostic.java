@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import com.orca.compiler.core.diagnostics.attachments.DiagnosticAttachment;
 
 public class Diagnostic {
+
     private final String message;
     private final DiagnosticCode code;
     private final DiagnosticSeverity severity;
@@ -49,7 +50,8 @@ public class Diagnostic {
         return result;
     }
 
-    public @Nullable <T extends DiagnosticAttachment> T getFirstAttachment(Class<T> type) {
+    public @Nullable
+    <T extends DiagnosticAttachment> T getFirstAttachment(Class<T> type) {
         for (DiagnosticAttachment attachment : attachments) {
             if (type.isInstance(attachment)) {
                 return type.cast(attachment);

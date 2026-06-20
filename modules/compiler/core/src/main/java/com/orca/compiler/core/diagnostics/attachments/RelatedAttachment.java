@@ -5,6 +5,7 @@ import com.orca.compiler.core.text.IHaveLocation;
 import com.orca.compiler.core.text.IHaveSpan;
 
 public final class RelatedAttachment implements DiagnosticAttachment {
+
     private final IHaveLocation location;
     private final IHaveSpan span;
     private final String label;

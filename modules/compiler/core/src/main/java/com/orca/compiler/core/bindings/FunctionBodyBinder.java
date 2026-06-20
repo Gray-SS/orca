@@ -10,6 +10,7 @@ import com.orca.compiler.core.symbols.Symbol;
 import com.orca.compiler.core.syntax.statements.BlockStmt;
 
 public final class FunctionBodyBinder extends LocalBinder {
+
     private final CallableSymbol callableSymbol;
 
     public FunctionBodyBinder(Binder parent, CallableSymbol callableSymbol) {

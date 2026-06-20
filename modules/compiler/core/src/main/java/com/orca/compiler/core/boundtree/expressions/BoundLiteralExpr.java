@@ -11,6 +11,7 @@ import com.orca.compiler.core.lexer.TokenKind;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundLiteralExpr extends BoundExpression {
+
     private final BoundConstant constant;
 
     public BoundLiteralExpr(BoundConstant constant) {
@@ -46,11 +47,17 @@ public final class BoundLiteralExpr extends BoundExpression {
     }
 
     /**
-     * Binds a literal token to a corresponding BoundLiteralexpr instance based on the token kind and text.
-     * @param kind The kind of the token (e.g., IntegerLiteral, FloatLiteral, BoolLiteral, StringLiteral).
-     * @param text The text of the token, which is used to parse the value of the constant.
-     * @return A new BoundLiteralExpr instance that corresponds to the given token kind and text.
-     * @throws IllegalArgumentException if the token kind is not supported or if the text cannot be parsed into a valid constant value.
+     * Binds a literal token to a corresponding BoundLiteralexpr instance based
+     * on the token kind and text.
+     *
+     * @param kind The kind of the token (e.g., IntegerLiteral, FloatLiteral,
+     * BoolLiteral, StringLiteral).
+     * @param text The text of the token, which is used to parse the value of
+     * the constant.
+     * @return A new BoundLiteralExpr instance that corresponds to the given
+     * token kind and text.
+     * @throws IllegalArgumentException if the token kind is not supported or if
+     * the text cannot be parsed into a valid constant value.
      */
     public static BoundLiteralExpr bind(TokenKind kind, String text) {
         BoundConstant constant = switch (kind) {
@@ -84,7 +91,8 @@ public final class BoundLiteralExpr extends BoundExpression {
                     throw new IllegalArgumentException("Invalid string literal: " + text);
                 }
             }
-            default -> throw new IllegalStateException("Unsupported literal token kind: " + kind);
+            default ->
+                throw new IllegalStateException("Unsupported literal token kind: " + kind);
         };
 
         return new BoundLiteralExpr(constant);

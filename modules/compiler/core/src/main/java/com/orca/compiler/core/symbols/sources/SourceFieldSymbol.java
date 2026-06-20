@@ -7,6 +7,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class SourceFieldSymbol implements SourceSymbol, FieldSymbol {
+
     private final int index;
     private final String name;
     private final SyntaxNode declaringSyntax;
@@ -55,6 +56,6 @@ public final class SourceFieldSymbol implements SourceSymbol, FieldSymbol {
     @Override
     public int getModifiers() {
         return SourceSymbol.super.getModifiers()
-            | FieldSymbol.super.getModifiers();
+                | FieldSymbol.super.getModifiers();
     }
 }

@@ -9,6 +9,7 @@ import com.orca.compiler.core.typesystem.CollectionType;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundCollectionLiteralExpr extends BoundExpression {
+
     public final TypeSymbol symbol;
     public final List<BoundExpression> arguments;
 

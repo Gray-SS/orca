@@ -3,6 +3,7 @@ package com.orca.compiler.core.codegen;
 import com.orca.compiler.core.boundtree.BoundProgram;
 
 public final class Emitter {
+
     public static final String JAVA_CLASS_INIT_NAME = "<clinit>";
     public static final String JAVA_CTOR_NAME = "<init>";
     public static final String JAVA_OBJECT_INTERNAL_NAME = "java/lang/Object";

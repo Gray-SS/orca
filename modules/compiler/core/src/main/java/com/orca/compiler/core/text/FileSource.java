@@ -7,6 +7,7 @@ import com.orca.compiler.core.CompilerException;
 import com.orca.compiler.core.diagnostics.DiagnosticFactory;
 
 public class FileSource extends TextSource {
+
     private String _content;
 
     public FileSource(String path) {

@@ -8,6 +8,7 @@ import com.orca.compiler.core.boundtree.BoundProgram;
  * Interface pour la phase de semantic analysis et binding.
  */
 public interface BindingPhase {
+
     /**
      * Retourne une instance par défaut de la phase de binding.
      */
@@ -16,8 +17,9 @@ public interface BindingPhase {
     }
 
     /**
-     * Effectue la liaision (binding) et analyse sémantique sur l'arbre syntaxique.
-     * 
+     * Effectue la liaision (binding) et analyse sémantique sur l'arbre
+     * syntaxique.
+     *
      * @param context le contexte de compilation
      * @param syntaxTree l'arbre syntaxique
      * @return le programme lié

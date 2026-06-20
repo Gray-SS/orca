@@ -6,6 +6,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BoundConditionalGotoStmt extends BoundStatement {
+
     public final BoundLabel label;
     public final boolean inverseCondition;
     public final BoundExpression condition;

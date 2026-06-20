@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class SpecialTypeSyntax extends TypeSyntax {
+
     private final SyntaxToken token;
     private final SpecialTypeKind kind;
 

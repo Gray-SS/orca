@@ -5,6 +5,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundArrayLiteralExpr extends BoundExpression {
+
     public final LangType elementType;
     public final BoundExpression lengthExpr;
 

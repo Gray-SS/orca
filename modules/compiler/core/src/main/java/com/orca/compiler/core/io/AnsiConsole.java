@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.Stack;
 
 public class AnsiConsole {
+
     private static final Stack<AnsiColor> colorCodes = new java.util.Stack<>();
 
     public static void pushColor(AnsiColor... colors) {

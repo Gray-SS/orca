@@ -3,7 +3,6 @@ package com.orca.compiler.core.symbols.intrinsics;
 public enum IntrinsicKind {
     NONE,
     METHOD_NOT("not"),
-
     METHOD_STR_0BYTE("str"),
     METHOD_STR_0SHORT("str"),
     METHOD_STR_0INT("str"),
@@ -13,14 +12,10 @@ public enum IntrinsicKind {
     METHOD_STR_0BOOL("str"),
     METHOD_STR_0CHAR("str"),
     METHOD_STR_0STRING("str"),
-
     METHOD_FLOOR("floor"),
     METHOD_CEIL("ceil"),
-
     METHOD_LENGTH_0STRING("length"),
-    METHOD_LENGTH_0ARRAY("length"),
-
-    ;
+    METHOD_LENGTH_0ARRAY("length"),;
 
     private final String name;
 

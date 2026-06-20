@@ -1,6 +1,7 @@
 package com.orca.compiler.core;
 
 public final class Logger {
+
     private final CompilationContext context;
 
     public Logger(CompilationContext context) {

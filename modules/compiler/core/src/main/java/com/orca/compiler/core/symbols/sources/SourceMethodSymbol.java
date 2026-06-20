@@ -10,6 +10,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.typesystem.LangType;
 
 public class SourceMethodSymbol extends MethodSymbol implements SourceSymbol {
+
     private int modifiers;
     private final String name;
     private final SyntaxNode declaringSyntax;
@@ -35,7 +36,8 @@ public class SourceMethodSymbol extends MethodSymbol implements SourceSymbol {
     }
 
     /**
-     * Marks this method as the entry point of the program. This is used to identify the main function during code generation.
+     * Marks this method as the entry point of the program. This is used to
+     * identify the main function during code generation.
      */
     public void markAsEntryPoint() {
         modifiers |= SymbolModifiers.ENTRY_POINT;
@@ -44,8 +46,8 @@ public class SourceMethodSymbol extends MethodSymbol implements SourceSymbol {
     @Override
     public int getModifiers() {
         return super.getModifiers()
-            | SourceSymbol.super.getModifiers()
-            | modifiers;
+                | SourceSymbol.super.getModifiers()
+                | modifiers;
     }
 
     @Override

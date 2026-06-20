@@ -6,6 +6,7 @@ import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class LiteralExpr extends ExpressionSyntax {
+
     private final SyntaxToken token;
     private final Object value;
 
@@ -16,6 +17,7 @@ public class LiteralExpr extends ExpressionSyntax {
 
     /**
      * Gets the token representing this literal expression.
+     *
      * @return The token representing this literal expression.
      */
     public SyntaxToken token() {
@@ -24,6 +26,7 @@ public class LiteralExpr extends ExpressionSyntax {
 
     /**
      * Gets the value of this literal expression.
+     *
      * @return The value of this literal expression.
      */
     public Object value() {

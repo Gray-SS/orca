@@ -3,6 +3,7 @@ package com.orca.compiler.core.symbols;
 import java.util.function.Supplier;
 
 public final class LazySymbol<T extends Symbol> {
+
     private final SymbolKey key;
     private final Supplier<T> resolver;
     private ResolutionState state = ResolutionState.UNRESOLVED;
@@ -13,13 +14,17 @@ public final class LazySymbol<T extends Symbol> {
         this.resolver = resolver;
     }
 
-    /** Force la résolution. Lève une exception si cycle détecté. */
+    /**
+     * Force la résolution. Lève une exception si cycle détecté.
+     */
     public T resolve() {
-        if (state == ResolutionState.RESOLVING)
+        if (state == ResolutionState.RESOLVING) {
             throw new IllegalStateException("Cycle detected while resolving symbol: " + key.name());
+        }
 
-        if (state == ResolutionState.RESOLVED)
+        if (state == ResolutionState.RESOLVED) {
             return resolved;
+        }
 
         state = ResolutionState.RESOLVING;
         resolved = resolver.get();

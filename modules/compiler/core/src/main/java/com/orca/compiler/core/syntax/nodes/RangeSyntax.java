@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class RangeSyntax extends SyntaxNode {
+
     private final ExpressionSyntax start;
     private final ExpressionSyntax end;
 
@@ -15,6 +16,7 @@ public class RangeSyntax extends SyntaxNode {
 
     /**
      * Gets the start expression of this range syntax.
+     *
      * @return The start expression of this range syntax.
      */
     public ExpressionSyntax start() {
@@ -23,6 +25,7 @@ public class RangeSyntax extends SyntaxNode {
 
     /**
      * Gets the end expression of this range syntax.
+     *
      * @return The end expression of this range syntax.
      */
     public ExpressionSyntax end() {

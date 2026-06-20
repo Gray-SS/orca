@@ -7,6 +7,7 @@ import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class SimpleIdentifierSyntax extends IdentifierSyntax {
+
     private final SyntaxToken identifierToken;
 
     public SimpleIdentifierSyntax(SyntaxToken identifierToken) {

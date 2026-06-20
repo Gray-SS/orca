@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ClassDirWriter implements ClassSink {
+
     private final Path outputDir;
 
     public ClassDirWriter(Path outputDir) {

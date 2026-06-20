@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxList;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class InvocationExpr extends ExpressionSyntax {
+
     private final ExpressionSyntax callee;
     private final SyntaxList<ExpressionSyntax> arguments;
 

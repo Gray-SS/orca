@@ -5,6 +5,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BoundExpressionStmt extends BoundStatement {
+
     private final BoundExpression expression;
 
     public BoundExpressionStmt(BoundExpression expression) {

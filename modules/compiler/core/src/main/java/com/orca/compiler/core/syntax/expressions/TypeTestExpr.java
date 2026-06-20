@@ -8,10 +8,12 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.types.TypeSyntax;
 
 public final class TypeTestExpr extends ExpressionSyntax {
+
     private final ExpressionSyntax expression;
     private final SyntaxToken isKeyword;
     private final TypeSyntax type;
-    private final @Nullable SyntaxToken identifier;
+    private final @Nullable
+    SyntaxToken identifier;
 
     public TypeTestExpr(ExpressionSyntax expression, SyntaxToken isKeyword, TypeSyntax type, @Nullable SyntaxToken identifier) {
         this.expression = expression;
@@ -22,6 +24,7 @@ public final class TypeTestExpr extends ExpressionSyntax {
 
     /**
      * Gets the expression being tested by this type test expression.
+     *
      * @return The expression being tested by this type test expression.
      */
     public ExpressionSyntax expression() {
@@ -30,6 +33,7 @@ public final class TypeTestExpr extends ExpressionSyntax {
 
     /**
      * Gets the 'is' keyword of this type test expression.
+     *
      * @return The 'is' keyword of this type test expression.
      */
     public SyntaxToken isKeyword() {
@@ -38,6 +42,7 @@ public final class TypeTestExpr extends ExpressionSyntax {
 
     /**
      * Gets the type being tested by this type test expression.
+     *
      * @return The type being tested by this type test expression.
      */
     public TypeSyntax type() {
@@ -45,10 +50,14 @@ public final class TypeTestExpr extends ExpressionSyntax {
     }
 
     /**
-     * Gets the identifier to which the tested expression will be cast if the type test succeeds, or null if there is no such identifier.
-     * @return The identifier to which the tested expression will be cast if the type test succeeds, or null if there is no such identifier.
+     * Gets the identifier to which the tested expression will be cast if the
+     * type test succeeds, or null if there is no such identifier.
+     *
+     * @return The identifier to which the tested expression will be cast if the
+     * type test succeeds, or null if there is no such identifier.
      */
-    public @Nullable SyntaxToken identifier() {
+    public @Nullable
+    SyntaxToken identifier() {
         return identifier;
     }
 
@@ -60,7 +69,7 @@ public final class TypeTestExpr extends ExpressionSyntax {
     @Override
     public String toString() {
         return identifier == null
-            ? "TypeTestExpr(is, type=" + type + ")"
-            : "TypeTestExpr(is, type=" + type + ", ident=" + identifier.text() + ")";
+                ? "TypeTestExpr(is, type=" + type + ")"
+                : "TypeTestExpr(is, type=" + type + ", ident=" + identifier.text() + ")";
     }
 }

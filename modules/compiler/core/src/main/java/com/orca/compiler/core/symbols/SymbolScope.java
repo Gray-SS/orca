@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class SymbolScope {
+
     private final Map<String, List<Symbol>> symbols = new HashMap<>();
 
     public boolean has(String name) {

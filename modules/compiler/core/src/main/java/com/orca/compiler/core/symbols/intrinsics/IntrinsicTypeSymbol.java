@@ -10,6 +10,7 @@ import com.orca.compiler.core.typesystem.LangType;
 import com.orca.compiler.core.typesystem.PrimitiveType;
 
 public final class IntrinsicTypeSymbol implements IntrinsicSymbol, TypeSymbol {
+
     private final LangType type;
     private final SymbolScope members = new SymbolScope();
     private final List<ExtensionSymbol> extensions = new java.util.ArrayList<>();

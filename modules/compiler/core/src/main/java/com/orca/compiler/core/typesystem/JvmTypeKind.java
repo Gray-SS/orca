@@ -15,9 +15,7 @@ public enum JvmTypeKind {
     LOCAL("local"),
     MEMBER("member"),
     UNNAMED("unnamed"),
-    CLASS("class")
-
-    ;
+    CLASS("class");
 
     private final String displayName;
 

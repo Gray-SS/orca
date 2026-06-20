@@ -5,8 +5,6 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundNodeKind;
-import com.orca.compiler.core.boundtree.expressions.BoundReferenceExpr.ConstructorRef;
-import com.orca.compiler.core.boundtree.expressions.BoundReferenceExpr.SelfRef;
 import com.orca.compiler.core.symbols.ConstructorSymbol;
 import com.orca.compiler.core.symbols.FieldSymbol;
 import com.orca.compiler.core.symbols.MethodSymbol;

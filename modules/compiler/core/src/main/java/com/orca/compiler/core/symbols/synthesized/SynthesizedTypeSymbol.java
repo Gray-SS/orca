@@ -11,6 +11,7 @@ import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class SynthesizedTypeSymbol implements SynthesizedSymbol, TypeSymbol {
+
     private final String name;
     private final LangType type;
     private final NamespaceSymbol owner;
@@ -45,8 +46,8 @@ public final class SynthesizedTypeSymbol implements SynthesizedSymbol, TypeSymbo
     @Override
     public int getModifiers() {
         return SynthesizedSymbol.super.getModifiers()
-            | TypeSymbol.super.getModifiers()
-            | modifiers;
+                | TypeSymbol.super.getModifiers()
+                | modifiers;
     }
 
     @Override

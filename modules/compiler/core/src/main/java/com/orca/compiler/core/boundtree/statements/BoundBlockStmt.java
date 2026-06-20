@@ -6,6 +6,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BoundBlockStmt extends BoundStatement {
+
     private final List<BoundStatement> statements;
 
     public BoundBlockStmt(List<BoundStatement> statements) {

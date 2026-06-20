@@ -9,6 +9,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BoundIfStmt extends BoundStatement {
+
     public final BoundIfClause ifClause;
     public final List<BoundIfClause> elseIfClauses;
 
@@ -21,7 +22,8 @@ public final class BoundIfStmt extends BoundStatement {
         this.elseClause = elseClause;
     }
 
-    public @Nullable BoundStatement elseBlock() {
+    public @Nullable
+    BoundStatement elseBlock() {
         return elseClause;
     }
 

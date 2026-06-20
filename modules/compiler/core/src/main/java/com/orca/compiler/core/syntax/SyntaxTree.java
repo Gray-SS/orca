@@ -22,8 +22,8 @@ public class SyntaxTree {
     }
 
     /**
-     * Like getSyntaxAtPosition but also tries position-1 as fallback.
-     * Useful for completion where the cursor sits just past the last typed character.
+     * Like getSyntaxAtPosition but also tries position-1 as fallback. Useful
+     * for completion where the cursor sits just past the last typed character.
      */
     public SyntaxNode getSyntaxAtPositionForCompletion(int position) {
         var result = getSyntaxAtPosition(this.root, position);

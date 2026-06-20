@@ -5,6 +5,7 @@ import com.orca.compiler.core.boundtree.BoundNodeKind;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundDefaultValueExpr extends BoundExpression {
+
     private final LangType type;
 
     public BoundDefaultValueExpr(LangType type) {

@@ -4,6 +4,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class PackageDirectiveSyntax extends SyntaxNode {
+
     private final IdentifierSyntax packageIdentifier;
 
     public PackageDirectiveSyntax(IdentifierSyntax packageIdentifier) {
@@ -17,6 +18,7 @@ public final class PackageDirectiveSyntax extends SyntaxNode {
 
     /**
      * Gets the name of this package.
+     *
      * @return The name of this package.
      */
     public String name() {
@@ -25,6 +27,7 @@ public final class PackageDirectiveSyntax extends SyntaxNode {
 
     /**
      * Gets the identifier syntax of this package.
+     *
      * @return The identifier syntax of this package.
      */
     public IdentifierSyntax packageIdentifier() {

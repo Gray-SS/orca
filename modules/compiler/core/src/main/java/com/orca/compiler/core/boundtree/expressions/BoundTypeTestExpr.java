@@ -6,6 +6,7 @@ import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundTypeTestExpr extends BoundExpression {
+
     private final BoundExpression operand;
     private final LangType targetType;
     private final TypeSymbol targetTypeSymbol;

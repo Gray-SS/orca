@@ -6,6 +6,7 @@ import com.orca.compiler.core.boundtree.BoundStatement;
 import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 
 public final class BasicBlockBuilder {
+
     private final List<BasicBlock> blocks = new java.util.ArrayList<>();
     private final List<BoundStatement> statements = new java.util.ArrayList<>();
 
@@ -35,7 +36,9 @@ public final class BasicBlockBuilder {
     }
 
     private void flush() {
-        if (statements.isEmpty()) return;
+        if (statements.isEmpty()) {
+            return;
+        }
 
         BasicBlock block = new BasicBlock(List.copyOf(statements));
         blocks.add(block);

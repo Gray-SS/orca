@@ -1,10 +1,13 @@
 package com.orca.compiler.core.text;
 
 /**
- *  Represents a source of text that is backed by an in-memory string. This can be useful for testing, or for representing code snippets that are not stored in files.
- *  The StringSource class extends the TextSource class, which provides common functionality for all text
+ * Represents a source of text that is backed by an in-memory string. This can
+ * be useful for testing, or for representing code snippets that are not stored
+ * in files. The StringSource class extends the TextSource class, which provides
+ * common functionality for all text
  */
 public class StringSource extends TextSource {
+
     private final String _content;
 
     public StringSource(String content) {

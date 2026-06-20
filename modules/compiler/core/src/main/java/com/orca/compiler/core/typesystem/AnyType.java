@@ -1,6 +1,7 @@
 package com.orca.compiler.core.typesystem;
 
 public final class AnyType extends BaseType {
+
     public static final AnyType INSTANCE = new AnyType();
 
     private AnyType() {

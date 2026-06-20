@@ -9,6 +9,7 @@ import com.orca.compiler.core.symbols.synthesized.SynthesizedParameterSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class IntrinsicMethodSymbol extends MethodSymbol implements IntrinsicSymbol {
+
     private final IntrinsicKind intrinsicKind;
     private final List<LangType> parameterTypes;
     private final LangType returnType;
@@ -37,20 +38,20 @@ public final class IntrinsicMethodSymbol extends MethodSymbol implements Intrins
 
     public static final List<IntrinsicMethodSymbol> getAllIntrinsicMethods() {
         return List.of(
-            NOT,
-            FLOOR,
-            CEIL,
-            STR_0STRING,
-            STR_0BYTE,
-            STR_0SHORT,
-            STR_0INT,
-            STR_0LONG,
-            STR_0FLOAT,
-            STR_0DOUBLE,
-            STR_0BOOL,
-            STR_0CHAR,
-            LENGTH_0STRING,
-            LENGTH_0ARRAY
+                NOT,
+                FLOOR,
+                CEIL,
+                STR_0STRING,
+                STR_0BYTE,
+                STR_0SHORT,
+                STR_0INT,
+                STR_0LONG,
+                STR_0FLOAT,
+                STR_0DOUBLE,
+                STR_0BOOL,
+                STR_0CHAR,
+                LENGTH_0STRING,
+                LENGTH_0ARRAY
         );
     }
 
@@ -77,7 +78,7 @@ public final class IntrinsicMethodSymbol extends MethodSymbol implements Intrins
     @Override
     public int getModifiers() {
         return super.getModifiers()
-            | IntrinsicSymbol.super.getModifiers()
-            | SymbolModifiers.STATIC;
+                | IntrinsicSymbol.super.getModifiers()
+                | SymbolModifiers.STATIC;
     }
 }

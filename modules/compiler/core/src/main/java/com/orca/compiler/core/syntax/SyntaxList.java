@@ -5,6 +5,7 @@ import java.util.List;
 import com.orca.compiler.core.text.SourceSpan;
 
 public class SyntaxList<T extends SyntaxNode> extends SyntaxNode implements Iterable<T> {
+
     private final List<T> elements;
     private final SourceSpan span;
 
@@ -15,6 +16,7 @@ public class SyntaxList<T extends SyntaxNode> extends SyntaxNode implements Iter
 
     /**
      * Gets the elements of this syntax list.
+     *
      * @return The elements of this syntax list.
      */
     public List<T> elements() {
@@ -23,6 +25,7 @@ public class SyntaxList<T extends SyntaxNode> extends SyntaxNode implements Iter
 
     /**
      * Gets the number of elements in this syntax list.
+     *
      * @return The number of elements in this syntax list.
      */
     public int size() {
@@ -31,6 +34,7 @@ public class SyntaxList<T extends SyntaxNode> extends SyntaxNode implements Iter
 
     /**
      * Gets the element at the specified index in this syntax list.
+     *
      * @param index The index of the element to get.
      * @return The element at the specified index in this syntax list.
      */

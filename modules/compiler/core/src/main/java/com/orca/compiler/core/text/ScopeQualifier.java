@@ -8,6 +8,7 @@ import com.orca.compiler.core.syntax.nodes.SimpleIdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.SpecialTypeIdentifierSyntax;
 
 public final class ScopeQualifier implements Iterable<String> {
+
     private final String name;
     private ScopeQualifier next;
 
@@ -175,7 +176,8 @@ public final class ScopeQualifier implements Iterable<String> {
 
     public static ScopeQualifier of(IdentifierSyntax identifier) {
         return switch (identifier) {
-            case SpecialTypeIdentifierSyntax special -> new ScopeQualifier(special.text());
+            case SpecialTypeIdentifierSyntax special ->
+                new ScopeQualifier(special.text());
             case SimpleIdentifierSyntax simple -> {
                 yield new ScopeQualifier(simple.name());
             }

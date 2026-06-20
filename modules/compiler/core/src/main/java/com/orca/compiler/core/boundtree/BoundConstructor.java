@@ -4,6 +4,7 @@ import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.symbols.ConstructorSymbol;
 
 public final class BoundConstructor extends BoundNode {
+
     private final ConstructorSymbol constructor;
     private final BoundBlockStmt body;
 

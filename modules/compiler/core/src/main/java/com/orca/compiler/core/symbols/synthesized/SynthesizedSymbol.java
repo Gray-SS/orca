@@ -6,6 +6,7 @@ import com.orca.compiler.core.text.Location;
 import com.orca.compiler.core.text.SynthesizedLocation;
 
 public interface SynthesizedSymbol extends Symbol {
+
     @Override
     default Location location() {
         return new SynthesizedLocation(this);

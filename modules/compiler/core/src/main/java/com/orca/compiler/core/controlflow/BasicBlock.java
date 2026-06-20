@@ -5,6 +5,7 @@ import java.util.List;
 import com.orca.compiler.core.boundtree.BoundStatement;
 
 public final class BasicBlock {
+
     private final boolean isStart;
     private final boolean isEnd;
     private final List<BoundStatement> statements;

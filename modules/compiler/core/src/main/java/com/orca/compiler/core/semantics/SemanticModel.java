@@ -46,7 +46,6 @@ import com.orca.compiler.core.symbols.sources.SourceVariableSymbol;
 import com.orca.compiler.core.syntax.CompilationUnit;
 import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxTree;
-import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
 import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.ImplBlockSyntax;
 import com.orca.compiler.core.syntax.members.MemberSyntax;

@@ -7,6 +7,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.types.TypeSyntax;
 
 public class ParameterSyntax extends SyntaxNode {
+
     private final SimpleIdentifierSyntax identifier;
 
     @Nullable
@@ -26,7 +27,9 @@ public class ParameterSyntax extends SyntaxNode {
     }
 
     /**
-     * Determines whether this parameter is a typed parameter (i.e. a parameter that has an explicit type annotation).
+     * Determines whether this parameter is a typed parameter (i.e. a parameter
+     * that has an explicit type annotation).
+     *
      * @return True if this parameter is a typed parameter, false otherwise.
      */
     public boolean isTyped() {
@@ -34,7 +37,10 @@ public class ParameterSyntax extends SyntaxNode {
     }
 
     /**
-     * Determines whether this parameter is a receiver parameter (i.e. a parameter that represents the instance of the type that the method is being called on).
+     * Determines whether this parameter is a receiver parameter (i.e. a
+     * parameter that represents the instance of the type that the method is
+     * being called on).
+     *
      * @return True if this parameter is a receiver parameter, false otherwise.
      */
     public boolean isReceiver() {
@@ -43,6 +49,7 @@ public class ParameterSyntax extends SyntaxNode {
 
     /**
      * Gets the identifier token for this parameter.
+     *
      * @return The identifier token for this parameter.
      */
     public SimpleIdentifierSyntax identifier() {
@@ -50,8 +57,11 @@ public class ParameterSyntax extends SyntaxNode {
     }
 
     /**
-     * Gets the type of this parameter, or null if this parameter is a receiver parameter.
-     * @return The type of this parameter, or null if this parameter is a receiver parameter.
+     * Gets the type of this parameter, or null if this parameter is a receiver
+     * parameter.
+     *
+     * @return The type of this parameter, or null if this parameter is a
+     * receiver parameter.
      */
     @Nullable
     public TypeSyntax type() {

@@ -13,6 +13,7 @@ import com.orca.compiler.core.typesystem.LangType;
 import com.orca.compiler.core.typesystem.NominalType;
 
 public class SynthesizedEntryClassSymbol implements SynthesizedSymbol, TypeSymbol {
+
     private final String name;
     private final SymbolScope members;
     private final Compilation compilation;
@@ -42,7 +43,7 @@ public class SynthesizedEntryClassSymbol implements SynthesizedSymbol, TypeSymbo
     @Override
     public int getModifiers() {
         return SynthesizedSymbol.super.getModifiers()
-            | TypeSymbol.super.getModifiers();
+                | TypeSymbol.super.getModifiers();
     }
 
     @Override

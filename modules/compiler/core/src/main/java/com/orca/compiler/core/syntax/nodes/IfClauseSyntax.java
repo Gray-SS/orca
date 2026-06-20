@@ -6,6 +6,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.statements.BlockStmt;
 
 public class IfClauseSyntax extends SyntaxNode {
+
     private final ExpressionSyntax condition;
     private final BlockStmt body;
 
@@ -16,6 +17,7 @@ public class IfClauseSyntax extends SyntaxNode {
 
     /**
      * Gets the condition of this if clause.
+     *
      * @return The condition of this if clause.
      */
     public ExpressionSyntax condition() {
@@ -24,6 +26,7 @@ public class IfClauseSyntax extends SyntaxNode {
 
     /**
      * Gets the body of this if clause.
+     *
      * @return The body of this if clause.
      */
     public BlockStmt body() {

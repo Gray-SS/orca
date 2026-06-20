@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.statements.BlockStmt;
 
 public class ElseClauseSyntax extends SyntaxNode {
+
     private final BlockStmt body;
 
     public ElseClauseSyntax(BlockStmt body) {
@@ -13,6 +14,7 @@ public class ElseClauseSyntax extends SyntaxNode {
 
     /**
      * Gets the body of this else clause.
+     *
      * @return The body of this else clause.
      */
     public BlockStmt body() {

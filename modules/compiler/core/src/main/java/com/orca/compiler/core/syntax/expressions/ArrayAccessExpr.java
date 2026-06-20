@@ -4,6 +4,7 @@ import com.orca.compiler.core.syntax.ExpressionSyntax;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class ArrayAccessExpr extends ExpressionSyntax {
+
     private final ExpressionSyntax arrayExpr;
     private final ExpressionSyntax indexExpr;
 
@@ -14,6 +15,7 @@ public class ArrayAccessExpr extends ExpressionSyntax {
 
     /**
      * Gets the expression representing the array being accessed.
+     *
      * @return The expression representing the array being accessed.
      */
     public ExpressionSyntax arrayExpr() {
@@ -22,7 +24,9 @@ public class ArrayAccessExpr extends ExpressionSyntax {
 
     /**
      * Gets the expression representing the index of the element being accessed.
-     * @return The expression representing the index of the element being accessed.
+     *
+     * @return The expression representing the index of the element being
+     * accessed.
      */
     public ExpressionSyntax indexExpr() {
         return indexExpr;

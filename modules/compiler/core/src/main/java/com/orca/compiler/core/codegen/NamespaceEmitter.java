@@ -3,6 +3,7 @@ package com.orca.compiler.core.codegen;
 import com.orca.compiler.core.boundtree.BoundNamespace;
 
 public final class NamespaceEmitter {
+
     private final Emitter emitter;
     private final BoundNamespace boundNamespace;
 

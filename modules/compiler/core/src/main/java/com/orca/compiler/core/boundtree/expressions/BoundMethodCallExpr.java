@@ -9,6 +9,7 @@ import com.orca.compiler.core.symbols.MethodSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundMethodCallExpr extends BoundExpression {
+
     public final MethodSymbol methodSymbol;
     public final List<BoundExpression> arguments;
     public final BoundReferenceExpr methodRef;

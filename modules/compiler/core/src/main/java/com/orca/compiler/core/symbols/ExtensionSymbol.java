@@ -6,6 +6,7 @@ import com.orca.compiler.core.symbols.synthesized.GlobalNamespaceSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public interface ExtensionSymbol extends TypeSymbol {
+
     @Override
     GlobalNamespaceSymbol owner();
 
@@ -41,7 +42,9 @@ public interface ExtensionSymbol extends TypeSymbol {
 
     /**
      * Gets the type symbol of the type being extended by this extension symbol.
-     * @return The type symbol of the type being extended by this extension symbol.
+     *
+     * @return The type symbol of the type being extended by this extension
+     * symbol.
      */
     TypeSymbol getExtendedTypeSymbol();
 }

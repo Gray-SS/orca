@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.StatementSyntax;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class ExpressionStmt extends StatementSyntax {
+
     private final ExpressionSyntax expression;
 
     public ExpressionStmt(ExpressionSyntax expression) {
@@ -13,6 +14,7 @@ public class ExpressionStmt extends StatementSyntax {
 
     /**
      * Gets the expression contained in this statement.
+     *
      * @return The expression contained in this statement.
      */
     public ExpressionSyntax expression() {

@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.StatementSyntax;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class WhileStmt extends StatementSyntax {
+
     private final ExpressionSyntax condition;
     private final BlockStmt body;
 
@@ -15,6 +16,7 @@ public class WhileStmt extends StatementSyntax {
 
     /**
      * Gets the condition of this while statement.
+     *
      * @return The condition of this while statement.
      */
     public ExpressionSyntax condition() {
@@ -23,6 +25,7 @@ public class WhileStmt extends StatementSyntax {
 
     /**
      * Gets the body of this while statement.
+     *
      * @return The body of this while statement.
      */
     public BlockStmt body() {

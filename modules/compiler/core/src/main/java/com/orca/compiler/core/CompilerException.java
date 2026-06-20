@@ -3,6 +3,7 @@ package com.orca.compiler.core;
 import com.orca.compiler.core.diagnostics.Diagnostic;
 
 public class CompilerException extends RuntimeException {
+
     private final Diagnostic diagnostic;
 
     public CompilerException(Diagnostic diagnostic) {

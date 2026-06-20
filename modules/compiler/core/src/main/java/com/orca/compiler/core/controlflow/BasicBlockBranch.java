@@ -3,6 +3,7 @@ package com.orca.compiler.core.controlflow;
 import com.orca.compiler.core.boundtree.BoundExpression;
 
 public final class BasicBlockBranch {
+
     private final BasicBlock from;
     private final BasicBlock to;
     private final BoundExpression condition;

@@ -6,6 +6,7 @@ import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.boundtree.statements.BoundReturnStmt;
 
 public final class ControlFlowGraph {
+
     private final BasicBlock start;
     private final BasicBlock end;
     private final List<BasicBlock> blocks;
@@ -42,19 +43,19 @@ public final class ControlFlowGraph {
         return builder.build(blocks);
     }
 
-    public static boolean allPathReturns(BoundBlockStmt body)
-    {
+    public static boolean allPathReturns(BoundBlockStmt body) {
         var graph = create(body);
 
-        for (var branch : graph.end().incomingBranches())
-        {
+        for (var branch : graph.end().incomingBranches()) {
             var statements = branch.from().statements();
-            if (statements.isEmpty())
+            if (statements.isEmpty()) {
                 return false;
+            }
 
             var lastStatement = statements.getLast();
-            if (lastStatement == null || !(lastStatement instanceof BoundReturnStmt))
+            if (lastStatement == null || !(lastStatement instanceof BoundReturnStmt)) {
                 return false;
+            }
         }
 
         return true;

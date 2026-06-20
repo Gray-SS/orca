@@ -8,6 +8,7 @@ import com.orca.compiler.core.symbols.ParameterSymbol;
 import com.orca.compiler.core.typesystem.LangType;
 
 public class SynthesizedMethodSymbol extends MethodSymbol implements SynthesizedSymbol {
+
     private final int additionalModifiers;
     private final LangType returnType;
     private final List<SynthesizedParameterSymbol> parameters;
@@ -46,7 +47,7 @@ public class SynthesizedMethodSymbol extends MethodSymbol implements Synthesized
     @Override
     public int getModifiers() {
         return super.getModifiers()
-            | SynthesizedSymbol.super.getModifiers()
-            | additionalModifiers;
+                | SynthesizedSymbol.super.getModifiers()
+                | additionalModifiers;
     }
 }

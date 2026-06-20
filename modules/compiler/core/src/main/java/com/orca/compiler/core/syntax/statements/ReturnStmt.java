@@ -8,8 +8,10 @@ import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public class ReturnStmt extends StatementSyntax {
+
     private final SyntaxToken returnToken;
-    private final @Nullable ExpressionSyntax expression;
+    private final @Nullable
+    ExpressionSyntax expression;
 
     public ReturnStmt(SyntaxToken returnToken, ExpressionSyntax expression) {
         this.returnToken = returnToken;
@@ -18,6 +20,7 @@ public class ReturnStmt extends StatementSyntax {
 
     /**
      * Gets the return token of this return statement.
+     *
      * @return The return token of this return statement.
      */
     public SyntaxToken returnToken() {
@@ -25,8 +28,11 @@ public class ReturnStmt extends StatementSyntax {
     }
 
     /**
-     * Gets the expression being returned by this return statement, or null if this is a void return statement.
-     * @return The expression being returned by this return statement, or null if this is a void return statement.
+     * Gets the expression being returned by this return statement, or null if
+     * this is a void return statement.
+     *
+     * @return The expression being returned by this return statement, or null
+     * if this is a void return statement.
      */
     @Nullable
     public ExpressionSyntax expression() {

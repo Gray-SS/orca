@@ -4,8 +4,7 @@ public enum ConversionKind {
     NONE,
     IDENTITY,
     IMPLICIT,
-    EXPLICIT
-    ;
+    EXPLICIT;
 
     boolean none() {
         return this == NONE;

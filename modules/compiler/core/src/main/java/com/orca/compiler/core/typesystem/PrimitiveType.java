@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.orca.compiler.core.Debug;
 
 public final class PrimitiveType extends BaseType {
+
     private static final PrimitiveType[] VALUES = {
         Byte,
         Short,
@@ -14,14 +15,16 @@ public final class PrimitiveType extends BaseType {
         Double,
         Char,
         String,
-        Bool,
-    };
+        Bool,};
 
     /**
      * Returns an array containing all the primitive types.
+     *
      * @return An array containing all the primitive types.
-     * @implNote The returned array is a copy of the internal array, so modifying it will not affect the internal state of the class.
-     * @implNote If another primitive type is introduced, it should be added to the VALUES array as well.
+     * @implNote The returned array is a copy of the internal array, so
+     * modifying it will not affect the internal state of the class.
+     * @implNote If another primitive type is introduced, it should be added to
+     * the VALUES array as well.
      */
     public static PrimitiveType[] values() {
         return VALUES.clone();

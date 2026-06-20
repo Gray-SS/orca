@@ -8,6 +8,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.text.SourceSpan;
 
 public class BlockStmt extends StatementSyntax {
+
     private final SourceSpan span;
     private final List<StatementSyntax> statements;
 
@@ -18,6 +19,7 @@ public class BlockStmt extends StatementSyntax {
 
     /**
      * Gets the list of statements contained in this block statement.
+     *
      * @return The list of statements in this block statement.
      */
     public List<StatementSyntax> statements() {

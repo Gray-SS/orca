@@ -4,6 +4,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class ImportSyntax extends SyntaxNode {
+
     private final IdentifierSyntax packageIdentifier;
 
     public ImportSyntax(IdentifierSyntax packageIdentifier) {
@@ -12,6 +13,7 @@ public final class ImportSyntax extends SyntaxNode {
 
     /**
      * Returns the identifier of the package being imported.
+     *
      * @return the package identifier
      */
     public IdentifierSyntax identifier() {

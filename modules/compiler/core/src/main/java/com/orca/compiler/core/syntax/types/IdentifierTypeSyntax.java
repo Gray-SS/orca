@@ -4,6 +4,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.syntax.nodes.IdentifierSyntax;
 
 public final class IdentifierTypeSyntax extends TypeSyntax {
+
     private final IdentifierSyntax identifier;
 
     public IdentifierTypeSyntax(IdentifierSyntax identifier) {
@@ -12,6 +13,7 @@ public final class IdentifierTypeSyntax extends TypeSyntax {
 
     /**
      * Gets the identifier of this type syntax.
+     *
      * @return The identifier of this type syntax.
      */
     public IdentifierSyntax identifier() {

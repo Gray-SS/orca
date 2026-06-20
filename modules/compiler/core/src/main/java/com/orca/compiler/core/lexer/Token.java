@@ -5,10 +5,12 @@ import com.orca.compiler.core.text.SourceLocation;
 import com.orca.compiler.core.text.SourceSpan;
 
 /**
- * Represents a symbol (token) produced by the lexer.
- * Each symbol has a kind (type), a lexeme (the actual text from the input), and a position (line and column) in the input.
+ * Represents a symbol (token) produced by the lexer. Each symbol has a kind
+ * (type), a lexeme (the actual text from the input), and a position (line and
+ * column) in the input.
  */
 public final class Token implements IHaveSpan {
+
     private final TokenKind kind;
     private final String lexeme;
     private final SourceSpan span;
@@ -25,27 +27,48 @@ public final class Token implements IHaveSpan {
 
     /**
      * Checks if this symbol is of the expected kind.
+     *
      * @param expectedKind The kind to check against.
-     * @return true if this symbol's kind matches the expected kind, false otherwise.
+     * @return true if this symbol's kind matches the expected kind, false
+     * otherwise.
      */
     public boolean is(TokenKind expectedKind) {
         return this.kind == expectedKind;
     }
 
     /**
-     * Convenience method to check if this symbol is the end-of-file (EOF) symbol.
+     * Convenience method to check if this symbol is the end-of-file (EOF)
+     * symbol.
+     *
      * @return true if this symbol is EOF, false otherwise.
      */
     public boolean isEOF() {
         return is(TokenKind.EOF);
     }
 
-    public TokenKind kind() { return kind; }
-    public String lexeme() { return lexeme; }
-    public SourceSpan span() { return span; }
-    public SourceLocation loc() { return span.loc(); }
-    public SourceLocation endLoc() { return span.endLoc(); }
-    public Object value() { return value; }
+    public TokenKind kind() {
+        return kind;
+    }
+
+    public String lexeme() {
+        return lexeme;
+    }
+
+    public SourceSpan span() {
+        return span;
+    }
+
+    public SourceLocation loc() {
+        return span.loc();
+    }
+
+    public SourceLocation endLoc() {
+        return span.endLoc();
+    }
+
+    public Object value() {
+        return value;
+    }
 
     @Override
     public String toString() {

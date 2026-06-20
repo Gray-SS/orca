@@ -10,6 +10,7 @@ import com.orca.compiler.core.symbols.synthesized.GlobalNamespaceSymbol;
 import com.orca.compiler.core.syntax.SyntaxNode;
 
 public final class SourceExtensionSymbol implements SourceSymbol, ExtensionSymbol {
+
     private final SymbolScope members = new SymbolScope();
     private final TypeSymbol extendedTypeSymbol;
     private final SyntaxNode declaringSyntax;
@@ -24,7 +25,7 @@ public final class SourceExtensionSymbol implements SourceSymbol, ExtensionSymbo
     @Override
     public int getModifiers() {
         return SourceSymbol.super.getModifiers()
-            | ExtensionSymbol.super.getModifiers();
+                | ExtensionSymbol.super.getModifiers();
     }
 
     @Override

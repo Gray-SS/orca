@@ -7,7 +7,6 @@ import java.util.Comparator;
 
 import com.orca.compiler.core.boundtree.BoundProgram;
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
-
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.diagnostics.DiagnosticSeverity;
 import com.orca.compiler.core.diagnostics.attachments.CodeSnippetAttachment;

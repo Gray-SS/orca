@@ -5,6 +5,7 @@ import java.util.List;
 import com.orca.compiler.core.Debug;
 
 public final class SuggestionAttachment implements DiagnosticAttachment {
+
     private final String label;
     private final List<String> suggestions;
 

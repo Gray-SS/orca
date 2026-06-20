@@ -1,9 +1,11 @@
 package com.orca.compiler.core.typesystem;
 
 public final class VoidType extends BaseType {
+
     public static final VoidType INSTANCE = new VoidType();
 
-    private VoidType() {}
+    private VoidType() {
+    }
 
     @Override
     public TypeKind kind() {

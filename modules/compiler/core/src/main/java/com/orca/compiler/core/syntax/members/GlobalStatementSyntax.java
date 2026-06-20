@@ -4,6 +4,7 @@ import com.orca.compiler.core.syntax.StatementSyntax;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class GlobalStatementSyntax extends CompilationMemberSyntax {
+
     private final StatementSyntax statement;
 
     public GlobalStatementSyntax(StatementSyntax statement) {
@@ -12,6 +13,7 @@ public final class GlobalStatementSyntax extends CompilationMemberSyntax {
 
     /**
      * Gets the statement contained in this global statement syntax node.
+     *
      * @return The statement contained in this global statement syntax node.
      */
     public StatementSyntax statement() {

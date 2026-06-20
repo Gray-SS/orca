@@ -9,6 +9,7 @@ import com.orca.compiler.core.syntax.SyntaxVisitor;
 import com.orca.compiler.core.text.SourceSpan;
 
 public final class ErrorStatementSyntax extends StatementSyntax {
+
     private final SyntaxToken unexpectedToken;
 
     public ErrorStatementSyntax(SyntaxToken unexpectedToken) {

@@ -1,8 +1,7 @@
 package com.orca.compiler.core;
 
-import org.junit.Test;
-
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * End-to-end code generation tests. Each test compiles a source snippet to JVM

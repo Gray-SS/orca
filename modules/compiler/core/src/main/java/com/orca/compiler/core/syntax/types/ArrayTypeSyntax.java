@@ -3,6 +3,7 @@ package com.orca.compiler.core.syntax.types;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class ArrayTypeSyntax extends TypeSyntax {
+
     private final TypeSyntax elementType;
 
     public ArrayTypeSyntax(TypeSyntax elementType) {
@@ -11,6 +12,7 @@ public final class ArrayTypeSyntax extends TypeSyntax {
 
     /**
      * Gets the element type of the array.
+     *
      * @return The element type of the array.
      */
     public TypeSyntax elementType() {

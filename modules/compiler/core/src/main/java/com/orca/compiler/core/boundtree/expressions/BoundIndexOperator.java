@@ -3,6 +3,7 @@ package com.orca.compiler.core.boundtree.expressions;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class BoundIndexOperator {
+
     private final LangType baseType;
     private final LangType indexType;
     private final LangType resultType;

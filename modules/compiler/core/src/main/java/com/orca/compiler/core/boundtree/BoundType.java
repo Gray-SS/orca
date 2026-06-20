@@ -6,6 +6,7 @@ import com.orca.compiler.core.symbols.FieldSymbol;
 import com.orca.compiler.core.symbols.TypeSymbol;
 
 public final class BoundType extends BoundNode {
+
     private final TypeSymbol symbol;
     private final BoundNamespace owner;
     private final List<BoundMethod> methods = new java.util.ArrayList<>();

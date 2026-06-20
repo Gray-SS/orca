@@ -6,6 +6,7 @@ import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxTree;
 
 public final class SyntaxTreePrinter {
+
     public static void print(SyntaxTree syntaxTree, int indentSize) {
         printNode(syntaxTree.root(), 0, indentSize);
     }

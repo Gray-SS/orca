@@ -5,6 +5,7 @@ import com.orca.compiler.core.syntax.SyntaxToken;
 import com.orca.compiler.core.syntax.SyntaxVisitor;
 
 public final class SpecialTypeIdentifierSyntax extends IdentifierSyntax {
+
     private final SpecialTypeKind kind;
     private final SyntaxToken token;
 
@@ -29,9 +30,9 @@ public final class SpecialTypeIdentifierSyntax extends IdentifierSyntax {
 
     @Override
     public String toString() {
-        return "SpecialTypeIdentifierSyntax{" +
-            "kind=" + kind +
-            ", token=" + token +
-            '}';
+        return "SpecialTypeIdentifierSyntax{"
+                + "kind=" + kind
+                + ", token=" + token
+                + '}';
     }
 }

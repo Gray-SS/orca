@@ -1,6 +1,7 @@
 package com.orca.compiler.core.typesystem;
 
 public final class TypeComparator {
+
     public static boolean areStructurallyEquivalent(LangType a, LangType b) {
         a = a.unwrap();
         b = b.unwrap();
