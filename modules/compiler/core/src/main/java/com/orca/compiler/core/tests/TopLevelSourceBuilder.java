@@ -105,7 +105,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     // =========================================================================
     public static final class CollectionBodyBuilder extends SourceBuilder {
 
-        public CollectionBodyBuilder appendField(String type, String name) {
+        public CollectionBodyBuilder withField(String type, String name) {
             appendFormat("%s %s;\n", type, name);
             return this;
         }
@@ -165,17 +165,6 @@ public class TopLevelSourceBuilder extends SourceBuilder {
         }
     }
 
-    public static final class ArgumentContextSourceBuilder extends SourceBuilder {
-
-        public ArgumentContextSourceBuilder withArgument(String argument) {
-            if (builder.length() > 0) {
-                builder.append(", ");
-            }
-            builder.append(argument);
-            return this;
-        }
-    }
-
     public static final class LocalContextSourceBuilder extends SourceBuilder {
 
         public LocalContextSourceBuilder withStatement(String statement) {
@@ -187,14 +176,8 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             return withStatement(target + " = " + expression);
         }
 
-        public LocalContextSourceBuilder withInvocation(String name,
-                Consumer<ArgumentContextSourceBuilder> argsBuilder) {
-            withStatement(name + "(" + acceptAndBuild(new ArgumentContextSourceBuilder(), argsBuilder) + ")");
-            return this;
-        }
-
         public LocalContextSourceBuilder withPrintln(String value) {
-            return withInvocation("std::io::println", args -> args.withArgument(value));
+            return withStatement("std::io::println(" + value + ")");
         }
 
         public LocalContextSourceBuilder withReturn() {
