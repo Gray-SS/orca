@@ -4,6 +4,36 @@ import java.util.function.Consumer;
 
 public class TopLevelSourceBuilder extends SourceBuilder {
 
+    @Override
+    public TopLevelSourceBuilder declareLetVariable(String name, String initializer, String type) {
+        super.declareLetVariable(name, initializer, type);
+        return this;
+    }
+
+    @Override
+    public TopLevelSourceBuilder declareLetVariable(String name, String initializer) {
+        super.declareLetVariable(name, initializer);
+        return this;
+    }
+
+    @Override
+    public TopLevelSourceBuilder declareVarVariable(String name, String initializer, String type) {
+        super.declareVarVariable(name, initializer, type);
+        return this;
+    }
+
+    @Override
+    public TopLevelSourceBuilder declareVarVariable(String name, String initializer) {
+        super.declareVarVariable(name, initializer);
+        return this;
+    }
+
+    @Override
+    public TopLevelSourceBuilder declareConstVariable(String name, String initializer, String type) {
+        super.declareConstVariable(name, initializer, type);
+        return this;
+    }
+
     public TopLevelSourceBuilder withDefaultPackage() {
         return withPackage("test");
     }
@@ -19,7 +49,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     }
 
     // --- Function declarations ---
-    public TopLevelSourceBuilder appendFunctionDecl(String returnType, String name,
+    public TopLevelSourceBuilder withFunction(String returnType, String name,
             Consumer<ParameterContextSourceBuilder> paramsBuilder,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
         final String format = "def %s %s(%s) {\n%s\n}\n";
@@ -29,12 +59,13 @@ public class TopLevelSourceBuilder extends SourceBuilder {
         return this;
     }
 
-    public TopLevelSourceBuilder appendFunctionDecl(String returnType, String name,
+    public TopLevelSourceBuilder withFunction(String returnType, String name,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
-        return appendFunctionDecl(returnType, name, params -> {}, bodyBuilder);
+        return withFunction(returnType, name, params -> {
+        }, bodyBuilder);
     }
 
-    public TopLevelSourceBuilder appendVoidFunctionDecl(String name,
+    public TopLevelSourceBuilder withVoidFunction(String name,
             Consumer<ParameterContextSourceBuilder> paramsBuilder,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
         final String format = "def %s(%s) {\n%s\n}\n";
@@ -44,17 +75,18 @@ public class TopLevelSourceBuilder extends SourceBuilder {
         return this;
     }
 
-    public TopLevelSourceBuilder appendVoidFunctionDecl(String name,
+    public TopLevelSourceBuilder withVoidFunction(String name,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
-        return appendVoidFunctionDecl(name, params -> {}, bodyBuilder);
+        return withVoidFunction(name, params -> {
+        }, bodyBuilder);
     }
 
-    public TopLevelSourceBuilder appendMainFunction(Consumer<LocalContextSourceBuilder> bodyBuilder) {
-        return appendVoidFunctionDecl("main", bodyBuilder);
+    public TopLevelSourceBuilder withMainFunction(Consumer<LocalContextSourceBuilder> bodyBuilder) {
+        return withVoidFunction("main", bodyBuilder);
     }
 
     // --- Collection declarations ---
-    public TopLevelSourceBuilder appendCollectionDecl(String name,
+    public TopLevelSourceBuilder withCollection(String name,
             Consumer<CollectionBodyBuilder> bodyBuilder) {
         final String format = "coll %s {\n%s\n}\n";
         appendFormat(format, name, acceptAndBuild(new CollectionBodyBuilder(), bodyBuilder));
@@ -62,17 +94,15 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     }
 
     // --- Impl declarations ---
-    public TopLevelSourceBuilder appendImplDecl(String collectionName,
-            Consumer<ImplBodyBuilder> bodyBuilder) {
+    public TopLevelSourceBuilder withImpl(String typeName, Consumer<ImplBodyBuilder> bodyBuilder) {
         final String format = "impl %s {\n%s\n}\n";
-        appendFormat(format, collectionName, acceptAndBuild(new ImplBodyBuilder(), bodyBuilder));
+        appendFormat(format, typeName, acceptAndBuild(new ImplBodyBuilder(), bodyBuilder));
         return this;
     }
 
     // =========================================================================
     // Inner builders
     // =========================================================================
-
     public static final class CollectionBodyBuilder extends SourceBuilder {
 
         public CollectionBodyBuilder appendField(String type, String name) {
@@ -83,7 +113,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
 
     public static final class ImplBodyBuilder extends SourceBuilder {
 
-        public ImplBodyBuilder appendMethod(String returnType, String name,
+        public ImplBodyBuilder withMethod(String returnType, String name,
                 Consumer<ParameterContextSourceBuilder> paramsBuilder,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "def %s %s(%s) {\n%s\n}\n";
@@ -93,12 +123,13 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             return this;
         }
 
-        public ImplBodyBuilder appendMethod(String returnType, String name,
+        public ImplBodyBuilder withMethod(String returnType, String name,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
-            return appendMethod(returnType, name, params -> {}, bodyBuilder);
+            return withMethod(returnType, name, params -> {
+            }, bodyBuilder);
         }
 
-        public ImplBodyBuilder appendVoidMethod(String name,
+        public ImplBodyBuilder withVoidMethod(String name,
                 Consumer<ParameterContextSourceBuilder> paramsBuilder,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "def %s(%s) {\n%s\n}\n";
@@ -108,15 +139,16 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             return this;
         }
 
-        public ImplBodyBuilder appendVoidMethod(String name,
+        public ImplBodyBuilder withVoidMethod(String name,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
-            return appendVoidMethod(name, params -> {}, bodyBuilder);
+            return withVoidMethod(name, params -> {
+            }, bodyBuilder);
         }
     }
 
     public static final class ParameterContextSourceBuilder extends SourceBuilder {
 
-        public ParameterContextSourceBuilder appendSelfParameter() {
+        public ParameterContextSourceBuilder withSelfParameter() {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
@@ -124,7 +156,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             return this;
         }
 
-        public ParameterContextSourceBuilder appendParameter(String name, String type) {
+        public ParameterContextSourceBuilder withParameter(String name, String type) {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
@@ -135,7 +167,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
 
     public static final class ArgumentContextSourceBuilder extends SourceBuilder {
 
-        public ArgumentContextSourceBuilder appendArgument(String argument) {
+        public ArgumentContextSourceBuilder withArgument(String argument) {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
@@ -146,61 +178,61 @@ public class TopLevelSourceBuilder extends SourceBuilder {
 
     public static final class LocalContextSourceBuilder extends SourceBuilder {
 
-        public LocalContextSourceBuilder appendStatement(String statement) {
+        public LocalContextSourceBuilder withStatement(String statement) {
             appendFormat("%s;\n", statement);
             return this;
         }
 
-        public LocalContextSourceBuilder appendAssignment(String target, String expression) {
-            return appendStatement(target + " = " + expression);
+        public LocalContextSourceBuilder withAssignment(String target, String expression) {
+            return withStatement(target + " = " + expression);
         }
 
-        public LocalContextSourceBuilder appendInvocation(String name,
+        public LocalContextSourceBuilder withInvocation(String name,
                 Consumer<ArgumentContextSourceBuilder> argsBuilder) {
-            appendStatement(name + "(" + acceptAndBuild(new ArgumentContextSourceBuilder(), argsBuilder) + ")");
+            withStatement(name + "(" + acceptAndBuild(new ArgumentContextSourceBuilder(), argsBuilder) + ")");
             return this;
         }
 
-        public LocalContextSourceBuilder appendPrintln(String value) {
-            return appendInvocation("std::io::println", args -> args.appendArgument(value));
+        public LocalContextSourceBuilder withPrintln(String value) {
+            return withInvocation("std::io::println", args -> args.withArgument(value));
         }
 
-        public LocalContextSourceBuilder appendReturn() {
-            return appendStatement("return");
+        public LocalContextSourceBuilder withReturn() {
+            return withStatement("return");
         }
 
-        public LocalContextSourceBuilder appendReturn(String expression) {
-            return appendStatement("return " + expression);
+        public LocalContextSourceBuilder withReturn(String expression) {
+            return withStatement("return " + expression);
         }
 
-        public LocalContextSourceBuilder appendIf(String condition,
+        public LocalContextSourceBuilder withIf(String condition,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "if (%s) {\n%s\n}\n";
             appendFormat(format, condition, acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
 
-        public LocalContextSourceBuilder appendElseIf(String condition,
+        public LocalContextSourceBuilder withElseIf(String condition,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "else if (%s) {\n%s\n}\n";
             appendFormat(format, condition, acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
 
-        public LocalContextSourceBuilder appendElse(Consumer<LocalContextSourceBuilder> bodyBuilder) {
+        public LocalContextSourceBuilder withElse(Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "else {\n%s\n}\n";
             appendFormat(format, acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
 
-        public LocalContextSourceBuilder appendWhile(String condition,
+        public LocalContextSourceBuilder withWhile(String condition,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "while (%s) {\n%s\n}\n";
             appendFormat(format, condition, acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
 
-        public LocalContextSourceBuilder appendFor(String initializer, String condition, String step,
+        public LocalContextSourceBuilder withFor(String initializer, String condition, String step,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
             final String format = "for (%s; %s; %s) {\n%s\n}\n";
             appendFormat(format, initializer, condition, step,

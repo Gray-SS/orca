@@ -11,33 +11,47 @@ public abstract class SourceBuilder {
         return this;
     }
 
+    public static final String QUALIFIED_NAME_SEPARATOR = "::";
+
+    public static String buildQualifiedName(String... parts) {
+        return String.join(QUALIFIED_NAME_SEPARATOR, parts);
+    }
+
+    public static TopLevelSourceBuilder create(String packageName) {
+        return new TopLevelSourceBuilder().withPackage(packageName);
+    }
+
+    public static TopLevelSourceBuilder create() {
+        return new TopLevelSourceBuilder().withDefaultPackage();
+    }
+
     public static <T extends SourceBuilder> String acceptAndBuild(T instance, Consumer<T> consumer) {
         consumer.accept(instance);
         return instance.build();
     }
 
-    // --- Variable declarations (valid in top-level, local, and impl-block contexts) ---
-    public SourceBuilder appendImmutableVariableDecl(String name, String initializer, String type) {
+    // --- Variable declarations ---
+    public SourceBuilder declareLetVariable(String name, String initializer, String type) {
         appendFormat("let %s: %s = %s;\n", name, type, initializer);
         return this;
     }
 
-    public SourceBuilder appendImmutableVariableDecl(String name, String initializer) {
+    public SourceBuilder declareLetVariable(String name, String initializer) {
         appendFormat("let %s := %s;\n", name, initializer);
         return this;
     }
 
-    public SourceBuilder appendMutableVariableDecl(String name, String initializer, String type) {
+    public SourceBuilder declareVarVariable(String name, String initializer, String type) {
         appendFormat("var %s: %s = %s;\n", name, type, initializer);
         return this;
     }
 
-    public SourceBuilder appendMutableVariableDecl(String name, String initializer) {
+    public SourceBuilder declareVarVariable(String name, String initializer) {
         appendFormat("var %s := %s;\n", name, initializer);
         return this;
     }
 
-    public SourceBuilder appendConstVariableDecl(String name, String initializer, String type) {
+    public SourceBuilder declareConstVariable(String name, String initializer, String type) {
         appendFormat("const %s: %s = %s;\n", name, type, initializer);
         return this;
     }
