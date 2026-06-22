@@ -457,8 +457,8 @@ public abstract class Binder {
         if (declarator.initializer() != null) {
             boundInitializer = (BoundExpression) bindExpr(declarator.initializer());
 
-            if (declaredType != null && !boundInitializer.type().isAssignableTo(declaredType)) {
-                throw SemanticErrors.typeMismatch(declarator, declaredType, boundInitializer.type());
+            if (declaredType != null) {
+                boundInitializer = applyConversion(declarator, boundInitializer, declaredType);
             }
         }
 
