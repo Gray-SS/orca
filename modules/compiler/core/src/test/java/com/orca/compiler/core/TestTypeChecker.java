@@ -19,6 +19,10 @@ public class TestTypeChecker {
         return SourceBuilder.buildQualifiedName(parts);
     }
 
+    private static String invoke(String functionName, String... args) {
+        return functionName + "(" + String.join(", ", args) + ")";
+    }
+
     private static void assertChecksLib(String source) throws Exception {
         try {
             CompilerTestHelper.parseAndBindLibrary(source);
@@ -71,10 +75,10 @@ public class TestTypeChecker {
     @Test
     public void testStructuralTypingAllowsSameShapeAssignment() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("A", f -> f.appendField("int", "x"))
-                .withCollection("B", f -> f.appendField("int", "x"))
+                .withCollection("A", f -> f.withField("int", "x"))
+                .withCollection("B", f -> f.withField("int", "x"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("a", invoke("A", "1"));
                     b.declareLetVariable("b", "a", "B");
                 })
                 .build();
@@ -84,21 +88,23 @@ public class TestTypeChecker {
 
     @Test
     public void testStructuralTypingRejectsDifferentShapeAssignment() throws Exception {
-        String sourceA = SourceBuilder
-                .create()
-                .withCollection("A", f -> f.appendField("int", "x"))
-                .withCollection("B", f -> f.appendField("int", "y"))
+        String sourceA = SourceBuilder.create()
+                .withCollection("A", f -> f.withField("int", "x"))
+                .withCollection("B", f -> f.withField("int", "y"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("a", invoke("A", "1"));
                     b.declareLetVariable("b", "a", "B");
                 })
                 .build();
 
         String sourceB = SourceBuilder.create()
-                .withCollection("A", f -> f.appendField("int", "x"))
-                .withCollection("B", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("A", f -> f.withField("int", "x"))
+                .withCollection("B", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("a", invoke("A", "1"));
                     b.declareLetVariable("b", "a", "B");
                 })
                 .build();
@@ -110,10 +116,10 @@ public class TestTypeChecker {
     @Test
     public void testIntToFloatPromotionOnInitialization() throws Exception {
         String source = SourceBuilder.create()
-                .declareLetVariable("gGlobalVar", "1", "float")
-                .declareConstVariable("gFinalVar", "1", "float")
+                .declareLetVariable("a", "1", "float")
+                .declareConstVariable("b", "1", "float")
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("lLocalVar", "1", "float");
+                    b.declareLetVariable("c", "1", "float");
                 })
                 .build();
 
@@ -123,9 +129,9 @@ public class TestTypeChecker {
     @Test
     public void testMemberAccessTypeChecks() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> f.withField("int", "x").withField("int", "y"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", "Point(1, 2)", "Point");
+                    b.declareLetVariable("p", invoke("Point", "1", "2"), "Point");
                     b.declareLetVariable("x", "p.x", "int");
                     b.declareLetVariable("y", "p.y", "int");
                 })
@@ -138,7 +144,7 @@ public class TestTypeChecker {
     public void testArrayAndIndexingTypeChecks() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("arr", "int[](5)");
+                    b.declareLetVariable("arr", invoke("int[]", "5"));
                     b.declareLetVariable("v", "arr[0]");
                 })
                 .build();
@@ -186,7 +192,7 @@ public class TestTypeChecker {
         String source = SourceBuilder.create()
                 .withFunction("int", "square", p -> p.withParameter("v", "int"), b -> b.withReturn("v * v"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("x", "square(true)");
+                    b.declareLetVariable("x", invoke("square", "true"));
                 })
                 .build();
 
@@ -198,7 +204,7 @@ public class TestTypeChecker {
         String source = SourceBuilder.create()
                 .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("x", "add(1)");
+                    b.declareLetVariable("x", invoke("add", "1"));
                 })
                 .build();
 
@@ -208,9 +214,12 @@ public class TestTypeChecker {
     @Test
     public void testArgumentErrorKeywordOnCollectionCtor() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", "Point(true, 2)");
+                    b.declareLetVariable("p", invoke("Point", "true", "2"));
                 })
                 .build();
 
@@ -220,9 +229,12 @@ public class TestTypeChecker {
     @Test
     public void testArgumentErrorKeywordOnTooManyArguments() throws Exception {
         String source = SourceBuilder.create()
-                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .withFunction("int", "add", p -> {
+                    p.withParameter("a", "int");
+                    p.withParameter("b", "int");
+                }, b -> b.withReturn("a + b"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("x", "add(1, 2, 3)");
+                    b.declareLetVariable("x", invoke("add", "1", "2", "3"));
                 })
                 .build();
 
@@ -234,7 +246,7 @@ public class TestTypeChecker {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
                     b.declareLetVariable("x", "1");
-                    b.declareLetVariable("y", "x(1)");
+                    b.declareLetVariable("y", invoke("x", "1"));
                 })
                 .build();
 
@@ -298,8 +310,8 @@ public class TestTypeChecker {
     @Test
     public void testCollectionErrorKeywordOnDuplicateCollectionName() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x"))
-                .withCollection("Point", f -> f.appendField("int", "y"))
+                .withCollection("Point", f -> f.withField("int", "x"))
+                .withCollection("Point", f -> f.withField("int", "y"))
                 .build();
 
         assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
@@ -308,9 +320,12 @@ public class TestTypeChecker {
     @Test
     public void testArgumentErrorKeywordOnBadConstructorArguments() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", "Point(true, 2)");
+                    b.declareLetVariable("p", invoke("Point", "true", "2"));
                 })
                 .build();
 
@@ -320,15 +335,24 @@ public class TestTypeChecker {
     @Test
     public void testStaticAndInstanceMethodsResolveSeparatelyFromTopLevelFunctions() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withCollection("Foo", f -> {
+                    f.withField("int", "a");
+                    f.withField("int", "b");
+                })
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "add", p -> p.withSelfParameter(), b -> b.withReturn("self.a + self.b"));
-                    impl.withMethod("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"));
+                    impl.withMethod("Foo", "create", p -> {
+                        p.withParameter("a", "int");
+                        p.withParameter("b", "int");
+                    }, b -> b.withReturn("Foo(a, b)"));
                 })
-                .withFunction("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"))
+                .withFunction("Foo", "create", p -> {
+                    p.withParameter("a", "int");
+                    p.withParameter("b", "int");
+                }, b -> b.withReturn("Foo(a, b)"))
                 .withVoidFunction("test", b -> {
                     b.declareLetVariable("foo", "Foo(10, 20)");
-                    b.declareLetVariable("result", qn("Foo", "create(4, 4).add() + foo.add() + create(1, 2).add()"));
+                    b.declareLetVariable("result", qn("Foo", "create") + "(4, 4).add() + foo.add() + create(1, 2).add()");
                 })
                 .build();
 
@@ -338,12 +362,15 @@ public class TestTypeChecker {
     @Test
     public void testInstanceMethodCanBeCalledAsStaticMember() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withCollection("Foo", f -> {
+                    f.withField("int", "a");
+                    f.withField("int", "b");
+                })
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "add", p -> p.withSelfParameter(), b -> b.withReturn("self.a + self.b"));
                 })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("result", qn("Foo", "add(Foo(1, 2))"));
+                    b.declareLetVariable("result", invoke(qn("Foo", "add"), invoke("Foo", "1", "2")));
                 })
                 .build();
 
@@ -353,13 +380,19 @@ public class TestTypeChecker {
     @Test
     public void testStaticMethodCannotBeCalledAsInstanceMember() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withCollection("Foo", f -> {
+                    f.withField("int", "a");
+                    f.withField("int", "b");
+                })
                 .withImpl("Foo", impl -> {
-                    impl.withMethod("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"));
+                    impl.withMethod("Foo", "create", p -> {
+                        p.withParameter("a", "int");
+                        p.withParameter("b", "int");
+                    }, b -> b.withReturn("Foo(a, b)"));
                 })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("foo", "Foo(1, 2)");
-                    b.declareLetVariable("other", "foo.create(3, 4)");
+                    b.declareLetVariable("foo", invoke("Foo", "1", "2"));
+                    b.declareLetVariable("other", invoke("foo.create", "3", "4"));
                     b.withReturn();
                 })
                 .build();
@@ -410,14 +443,14 @@ public class TestTypeChecker {
     @Test
     public void testCollectionMethodAccessibleInImpls() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> f.withField("int", "x").withField("int", "y"))
                 .withImpl("Point", impl -> {
                     impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
                 })
                 .withImpl("Point", impl -> {
                     impl.withMethod("int", "doubleSum", p -> p.withSelfParameter(), b -> b.withReturn("2 * sum(self)"));
                 })
-                .withVoidFunction("test", b -> b.declareLetVariable("p", "Point(1, 2)"))
+                .withVoidFunction("test", b -> b.declareLetVariable("p", invoke("Point", "1", "2")))
                 .build();
 
         assertChecksLib(source);
@@ -439,8 +472,8 @@ public class TestTypeChecker {
     @Test
     public void testConstantRequiresBaseType() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x"))
-                .declareConstVariable("p", "Point(1)", "Point")
+                .withCollection("Point", f -> f.withField("int", "x"))
+                .declareConstVariable("p", invoke("Point", "1"), "Point")
                 .build();
 
         assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_MISSING_BASE_TYPE);
@@ -450,7 +483,7 @@ public class TestTypeChecker {
     public void testConstantRequiresConstexpr() throws Exception {
         String source = SourceBuilder.create()
                 .withFunction("int", "compute", b -> b.withReturn("1"))
-                .declareConstVariable("k", "compute()", "int")
+                .declareConstVariable("k", invoke("compute"), "int")
                 .build();
 
         assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER);
@@ -462,7 +495,7 @@ public class TestTypeChecker {
     @Test
     public void testCollectionNameMustStartWithCapital() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("point", f -> f.appendField("int", "x"))
+                .withCollection("point", f -> f.withField("int", "x"))
                 .build();
 
         assertErrorLib(source, DiagnosticCode.SEM_LOWERCASE_COLLECTION_NAME);
@@ -471,7 +504,7 @@ public class TestTypeChecker {
     @Test
     public void testDuplicateFieldName() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Pair", f -> f.appendField("int", "x").appendField("int", "x"))
+                .withCollection("Pair", f -> f.withField("int", "x").withField("int", "x"))
                 .build();
 
         assertErrorLib(source, DiagnosticCode.SEM_FIELD_REDECLARED);
@@ -506,7 +539,7 @@ public class TestTypeChecker {
     @Test
     public void testImplMethodReceiverMustBeFirst() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "v"))
+                .withCollection("Foo", f -> f.withField("int", "v"))
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "get", p -> p.withParameter("x", "int").withSelfParameter(), b -> b.withReturn("self.v"));
                 })
@@ -518,7 +551,7 @@ public class TestTypeChecker {
     @Test
     public void testImplMethodDuplicateDeclaration() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "v"))
+                .withCollection("Foo", f -> f.withField("int", "v"))
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "get", p -> p.withSelfParameter(), b -> b.withReturn("self.v"));
                     impl.withMethod("int", "get", p -> p.withSelfParameter(), b -> b.withReturn("self.v"));
@@ -531,7 +564,7 @@ public class TestTypeChecker {
     @Test
     public void testMethodsAreDirectlyReferenceableInMemberContext() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> f.withField("int", "x").withField("int", "y"))
                 .withImpl("Point", impl -> {
                     impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
                 })
@@ -539,9 +572,9 @@ public class TestTypeChecker {
                     impl.withMethod("int", "doubleSum", p -> p.withSelfParameter(), b -> b.withReturn("2 * sum(self)"));
                 })
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", "Point(1, 2)");
-                    b.declareLetVariable("s", "p.sum()");
-                    b.declareLetVariable("ds", "p.doubleSum()");
+                    b.declareLetVariable("p", invoke("Point", "1", "2"));
+                    b.declareLetVariable("s", invoke("p.sum"));
+                    b.declareLetVariable("ds", invoke("p.doubleSum"));
                 })
                 .build();
 
@@ -651,14 +684,14 @@ public class TestTypeChecker {
     @Test
     public void testFullProgramTypeChecks() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> f.withField("int", "x").withField("int", "y"))
                 .declareVarVariable("globalCounter", "0", "int")
                 .declareConstVariable("size", "5", "int")
                 .withFunction("int", "sum", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", "Point(1, 2)");
-                    b.declareLetVariable("s", "sum(p.x, p.y)");
-                    b.declareLetVariable("arr", "int[](size)");
+                    b.declareLetVariable("p", invoke("Point", "1", "2"));
+                    b.declareLetVariable("s", invoke("sum", "p.x", "p.y"));
+                    b.declareLetVariable("arr", invoke("int[]", "size"));
                     b.withAssignment("arr[0]", "s");
                     b.withReturn();
                 })
@@ -711,7 +744,7 @@ public class TestTypeChecker {
     public void testFloatArrayTypeChecks() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("foo", b -> {
-                    b.declareLetVariable("arr", "float[](3)");
+                    b.declareLetVariable("arr", invoke("float[]", "3"));
                     b.withAssignment("arr[0]", "1.5");
                     b.declareLetVariable("v", "arr[0]");
                     b.withReturn();
@@ -733,7 +766,7 @@ public class TestTypeChecker {
     @Test
     public void testParameterRedeclaredInInstanceMethod() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "x"))
+                .withCollection("Foo", f -> f.withField("int", "x"))
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "foo", p -> p.withSelfParameter().withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"));
                 })
@@ -745,7 +778,7 @@ public class TestTypeChecker {
     @Test
     public void testParameterRedeclaredInStaticMethod() throws Exception {
         String source = SourceBuilder.create()
-                .withCollection("Foo", f -> f.appendField("int", "x"))
+                .withCollection("Foo", f -> f.withField("int", "x"))
                 .withImpl("Foo", impl -> {
                     impl.withMethod("int", "foo", p -> p.withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"));
                 })
@@ -769,13 +802,16 @@ public class TestTypeChecker {
     @Test
     public void testImportNamespaceCanBeUsedToAccessTypes() throws Exception {
         String sourceA = SourceBuilder.create("A")
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .build();
 
         String sourceB = SourceBuilder.create("B")
                 .withImport("A")
                 .withVoidFunction("test", b -> {
-                    b.declareLetVariable("p", qn("A", "Point(1, 2)"));
+                    b.declareLetVariable("p", invoke(qn("A", "Point"), "1", "2"));
                 })
                 .build();
 
@@ -785,12 +821,15 @@ public class TestTypeChecker {
     @Test
     public void testImportNamespaceCanBeUsedToAccessFunctions() throws Exception {
         String sourceA = SourceBuilder.create("A")
-                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .withFunction("int", "add", p -> {
+                    p.withParameter("a", "int");
+                    p.withParameter("b", "int");
+                }, b -> b.withReturn("a + b"))
                 .build();
 
         String sourceB = SourceBuilder.create("B")
                 .withImport("A")
-                .withVoidFunction("test", b -> b.declareLetVariable("s", qn("A", "add(3, 4)")))
+                .withVoidFunction("test", b -> b.declareLetVariable("s", invoke(qn("A", "add"), "3", "4")))
                 .build();
 
         TestTypeChecker.assertChecksLib(sourceA, sourceB);
@@ -799,7 +838,10 @@ public class TestTypeChecker {
     @Test
     public void testImportNamespaceCanBeUsedToAccessImplMethods() throws Exception {
         String sourceA = SourceBuilder.create("A")
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .withImpl("Point", impl -> {
                     impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
                 })
@@ -807,7 +849,7 @@ public class TestTypeChecker {
 
         String sourceB = SourceBuilder.create("B")
                 .withImport("A")
-                .withVoidFunction("test", b -> b.declareLetVariable("p", qn("A", "Point(1, 2)")))
+                .withVoidFunction("test", b -> b.declareLetVariable("p", invoke(qn("A", "Point"), "1", "2")))
                 .build();
 
         TestTypeChecker.assertChecksLib(sourceA, sourceB);
@@ -821,7 +863,7 @@ public class TestTypeChecker {
 
         String sourceB = SourceBuilder.create("B")
                 .withImport(qn("A", "add"))
-                .withVoidFunction("test", b -> b.declareLetVariable("s", "add(3, 4)"))
+                .withVoidFunction("test", b -> b.declareLetVariable("s", invoke(qn("A", "add"), "3", "4")))
                 .build();
 
         TestTypeChecker.assertChecksLib(sourceA, sourceB);
@@ -830,7 +872,10 @@ public class TestTypeChecker {
     @Test
     public void testImportImplMethodsFromOtherNamespace() throws Exception {
         String sourceA = SourceBuilder.create("A")
-                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withCollection("Point", f -> {
+                    f.withField("int", "x");
+                    f.withField("int", "y");
+                })
                 .withImpl("Point", impl -> {
                     impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
                 })
@@ -838,7 +883,7 @@ public class TestTypeChecker {
 
         String sourceB = SourceBuilder.create("B")
                 .withImport(qn("A", "Point", "sum"))
-                .withVoidFunction("test", b -> b.declareLetVariable("p", qn("A", "Point(1, 2)")))
+                .withVoidFunction("test", b -> b.declareLetVariable("p", invoke(qn("A", "Point"), "1", "2")))
                 .build();
 
         TestTypeChecker.assertChecksLib(sourceA, sourceB);
