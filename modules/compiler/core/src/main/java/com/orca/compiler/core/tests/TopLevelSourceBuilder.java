@@ -176,6 +176,14 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             return withStatement(target + " = " + expression);
         }
 
+        public LocalContextSourceBuilder withPrint(String value) {
+            return withStatement("std::io::print(" + value + ")");
+        }
+
+        public LocalContextSourceBuilder withPrintln() {
+            return withStatement("std::io::println()");
+        }
+
         public LocalContextSourceBuilder withPrintln(String value) {
             return withStatement("std::io::println(" + value + ")");
         }
