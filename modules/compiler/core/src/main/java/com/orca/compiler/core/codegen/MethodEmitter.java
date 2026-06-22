@@ -476,21 +476,44 @@ public final class MethodEmitter {
                 };
             case LONG ->
                 switch (toCat) {
+                    case INT_LIKE ->
+                        L2I;
                     case FLOAT ->
                         L2F;
                     case DOUBLE ->
                         L2D;
-                    default ->
+                    case LONG ->
+                        NOP;
+                    case REFERENCE ->
                         throw new IllegalStateException("Unsupported conversion from " + from + " to " + to);
                 };
             case FLOAT ->
                 switch (toCat) {
+                    case INT_LIKE ->
+                        F2I;
+                    case FLOAT ->
+                        NOP;
                     case DOUBLE ->
                         F2D;
-                    default ->
+                    case LONG ->
+                        F2L;
+                    case REFERENCE ->
                         throw new IllegalStateException("Unsupported conversion from " + from + " to " + to);
                 };
-            default ->
+            case DOUBLE ->
+                switch (toCat) {
+                    case INT_LIKE ->
+                        D2I;
+                    case FLOAT ->
+                        D2F;
+                    case DOUBLE ->
+                        NOP;
+                    case LONG ->
+                        D2L;
+                    case REFERENCE ->
+                        throw new IllegalStateException("Unsupported conversion from " + from + " to " + to);
+                };
+            case REFERENCE ->
                 throw new IllegalStateException("Unsupported conversion from " + from + " to " + to);
         };
 
@@ -1159,7 +1182,7 @@ public final class MethodEmitter {
     private void emitArrayLoad(MethodVisitor mv, LangType elementType) {
         switch (JvmCategory.of(elementType)) {
             case INT_LIKE -> {
-                mv.visitInsn(IALOAD);
+                mv.visitInsn(elementType.isBool() ? BALOAD : IALOAD);
             }
             case FLOAT -> {
                 mv.visitInsn(FALOAD);
@@ -1185,7 +1208,7 @@ public final class MethodEmitter {
                 mv.visitInsn(DASTORE);
             }
             case INT_LIKE -> {
-                mv.visitInsn(IASTORE);
+                mv.visitInsn(elementType.isBool() ? BASTORE : IASTORE);
             }
             case FLOAT -> {
                 mv.visitInsn(FASTORE);
