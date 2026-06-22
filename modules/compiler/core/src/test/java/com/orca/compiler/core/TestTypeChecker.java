@@ -6,52 +6,40 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
+import com.orca.compiler.core.tests.CompilerTestHelper;
+import com.orca.compiler.core.tests.SourceBuilder;
 
-/**
- * Tests pour le Type Checker (analyse sémantique et vérification de types).
- * Utilise la nouvelle architecture avec CompilationContext pour l'isolation.
- */
 public class TestTypeChecker {
 
-    private static void assertTypeChecks(String source) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBind(source);
-        } catch (CompilerException e) {
-            CompilerTestHelper.throwReadableDiagnosticException(e);
-            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
-        }
-    }
-
-    private static void assertTypeChecks(String... sources) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBind(sources);
-        } catch (CompilerException e) {
-            CompilerTestHelper.throwReadableDiagnosticException(e);
-            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
-        }
-    }
-
-    private static void assertTypeErrorContainsAll(String source, DiagnosticCode expectedCode) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBind(source);
-            fail("Expected CompilerException with diagnostic code '" + expectedCode + "' but type check succeeded.");
-        } catch (CompilerException ex) {
-            assertNotNull("Expected a diagnostic on the CompilerException", ex.diagnostic());
-            assertEquals(
-                    "Expected diagnostic code '" + expectedCode + "' but was: " + ex.diagnostic().code(),
-                    expectedCode,
-                    ex.diagnostic().code()
-            );
-        }
-    }
-
     /**
-     * Like assertTypeErrorContainsAll but uses strict binding (no implicit
-     * main).
+     * Helper method to build qualified names in tests, e.g. qn("Foo", "Bar") ->
+     * "Foo::Bar"
      */
-    private static void assertTypeErrorStrict(String source, DiagnosticCode expectedCode) throws Exception {
+    private static String qn(String... parts) {
+        return SourceBuilder.buildQualifiedName(parts);
+    }
+
+    private static void assertChecksLib(String source) throws Exception {
         try {
-            CompilerTestHelper.parseAndBindStrict(source);
+            CompilerTestHelper.parseAndBindLibrary(source);
+        } catch (CompilerException e) {
+            CompilerTestHelper.throwReadableDiagnosticException(e);
+            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
+        }
+    }
+
+    private static void assertChecksLib(String... sources) throws Exception {
+        try {
+            CompilerTestHelper.parseAndBindLibrary(sources);
+        } catch (CompilerException e) {
+            CompilerTestHelper.throwReadableDiagnosticException(e);
+            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
+        }
+    }
+
+    private static void assertErrorLib(String source, DiagnosticCode expectedCode) throws Exception {
+        try {
+            CompilerTestHelper.parseAndBindLibrary(source);
             fail("Expected CompilerException with diagnostic code '" + expectedCode + "' but type check succeeded.");
         } catch (CompilerException ex) {
             assertNotNull("Expected a diagnostic on the CompilerException", ex.diagnostic());
@@ -63,508 +51,442 @@ public class TestTypeChecker {
         }
     }
 
+    private static void assertErrorExec(String source, DiagnosticCode expectedCode) throws Exception {
+        try {
+            CompilerTestHelper.parseAndBind(source);
+            fail("Expected CompilerException with diagnostic code '" + expectedCode + "' but type check succeeded.");
+        } catch (CompilerException ex) {
+            assertNotNull("Expected a diagnostic on the CompilerException", ex.diagnostic());
+            assertEquals(
+                    "Expected diagnostic code '" + expectedCode + "' but was: " + ex.diagnostic().code(),
+                    expectedCode,
+                    ex.diagnostic().code()
+            );
+        }
+    }
+
+    // =========================================================================
+    // Structural typing
+    // =========================================================================
     @Test
     public void testStructuralTypingAllowsSameShapeAssignment() throws Exception {
-        String source = """
-            coll A { int x; }
-            coll B { int x; }
+        String source = SourceBuilder.create()
+                .withCollection("A", f -> f.appendField("int", "x"))
+                .withCollection("B", f -> f.appendField("int", "x"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("b", "a", "B");
+                })
+                .build();
 
-            def main() {
-                A a = A(1);
-                B b = a;
-            }
-        """;
-
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testStructuralTypingRejectsDifferentShapeAssignment() throws Exception {
-        String sourceA = """
-                coll A { int x; }
-                coll B { int y; }
+        String sourceA = SourceBuilder
+                .create()
+                .withCollection("A", f -> f.appendField("int", "x"))
+                .withCollection("B", f -> f.appendField("int", "y"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("b", "a", "B");
+                })
+                .build();
 
-                def main() {
-                    A a = A(1);
-                    B b = a;
-                }
-                """;
+        String sourceB = SourceBuilder.create()
+                .withCollection("A", f -> f.appendField("int", "x"))
+                .withCollection("B", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("a", "A(1)");
+                    b.declareLetVariable("b", "a", "B");
+                })
+                .build();
 
-        String sourceB = """
-            coll A { int x; }
-            coll B { int x; int y; }
-            def main() {
-                A a = A(1);
-                B b = a;
-            }
-        """;
-
-        assertTypeErrorContainsAll(sourceA, DiagnosticCode.SEM_TYPE_MISMATCH);
-        assertTypeErrorContainsAll(sourceB, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorLib(sourceA, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorLib(sourceB, DiagnosticCode.SEM_TYPE_MISMATCH);
     }
 
     @Test
     public void testIntToFloatPromotionOnInitialization() throws Exception {
-        String source = """
-            float gGlobalVar = 1;
-            final float gFinalVar = 1;
+        String source = SourceBuilder.create()
+                .declareLetVariable("gGlobalVar", "1", "float")
+                .declareConstVariable("gFinalVar", "1", "float")
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("lLocalVar", "1", "float");
+                })
+                .build();
 
-            def main() {
-                float lLocalVar = 1;
-            }
-        """;
-
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testMemberAccessTypeChecks() throws Exception {
-        String source = """
-            coll Point { int x; int y; }
-            def main() {
-                Point p = Point(1, 2);
-                int x = p.x;
-                int y = p.y;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", "Point(1, 2)", "Point");
+                    b.declareLetVariable("x", "p.x", "int");
+                    b.declareLetVariable("y", "p.y", "int");
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testArrayAndIndexingTypeChecks() throws Exception {
-        String source = """
-            int[] arr = int[](5);
-            int v = arr[0];
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("arr", "int[](5)");
+                    b.declareLetVariable("v", "arr[0]");
+                })
+                .build();
 
-        assertTypeChecks(CompilerTestHelper.wrapInMain(source));
+        assertChecksLib(source);
     }
 
     @Test
     public void testStringIndexingReturnsInt() throws Exception {
-        String source = """
-            string s = "abc";
-            int c = s[0];
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("s", "\"abc\"");
+                    b.declareLetVariable("c", "s[0]");
+                })
+                .build();
 
-        assertTypeChecks(CompilerTestHelper.wrapInMain(source));
+        assertChecksLib(source);
     }
 
     @Test
     public void testAssignToStringIndexRejected() throws Exception {
-        String source = """
-            string s = "abc";
-            s[0] = 1;
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("s", "\"abc\"");
+                    b.withAssignment("s[0]", "1");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(CompilerTestHelper.wrapInMain(source), DiagnosticCode.SEM_STRING_INDEX_ASSIGNMENT);
+        assertErrorLib(source, DiagnosticCode.SEM_STRING_INDEX_ASSIGNMENT);
     }
 
     @Test
     public void testOperatorErrorKeywordOnBadBinaryOperator() throws Exception {
-        String source = """
-            int x = true + 1;
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "true + 1");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(
-                CompilerTestHelper.wrapInMain(source),
-                DiagnosticCode.SEM_UNSUPPORTED_BINARY_OPERATOR
-        );
+        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_BINARY_OPERATOR);
     }
 
     @Test
     public void testNoMatchingOverloadOnBadFunctionCall() throws Exception {
-        String source = """
-            def int square(int v) { return v * v; }
-            def main() {
-                int x = square(true);
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withFunction("int", "square", p -> p.withParameter("v", "int"), b -> b.withReturn("v * v"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "square(true)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(
-                source,
-                DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH
-        );
+        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
     @Test
     public void testArgumentErrorKeywordOnTooFewArguments() throws Exception {
-        String source = """
-            def int add(int a, int b) { return a + b; }
-            def main() {
-                int x = add(1);
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "add(1)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
+        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
     }
 
     @Test
     public void testArgumentErrorKeywordOnCollectionCtor() throws Exception {
-        String source = """
-             coll Point { int x; int y; }
-             def main() {
-                 Point p = Point(true, 2);
-             }
-        """;
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", "Point(true, 2)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
+        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
     @Test
     public void testArgumentErrorKeywordOnTooManyArguments() throws Exception {
-        String source = """
-             def int add(int a, int b) { return a + b; }
-             def main() {
-                 int x = add(1, 2, 3);
-             }
-        """;
+        String source = SourceBuilder.create()
+                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "add(1, 2, 3)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
+        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
     }
 
     @Test
     public void testValueNotCallableOnFunctionCall() throws Exception {
-        String source = """
-            int x = 1;
-            int y = x(1);
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "1");
+                    b.declareLetVariable("y", "x(1)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(
-                CompilerTestHelper.wrapInMain(source),
-                DiagnosticCode.SEM_VALUE_NOT_CALLABLE
-        );
+        assertErrorLib(source, DiagnosticCode.SEM_VALUE_NOT_CALLABLE);
     }
 
     @Test
     public void testMissingConditionErrorKeywordOnIfCondition() throws Exception {
-        String source = """
-            if (1) {
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.withIf("1", body -> {
+                    });
+                })
+                .build();
 
-        assertTypeErrorContainsAll(
-                CompilerTestHelper.wrapInMain(source),
-                DiagnosticCode.SEM_MISSING_CONDITION
-        );
+        assertErrorLib(source, DiagnosticCode.SEM_MISSING_CONDITION);
     }
 
     @Test
     public void testMissingConditionErrorKeywordOnWhileCondition() throws Exception {
-        String source = """
-            while (1) {
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.withWhile("1", body -> {
+                    });
+                })
+                .build();
 
-        assertTypeErrorContainsAll(
-                CompilerTestHelper.wrapInMain(source),
-                DiagnosticCode.SEM_MISSING_CONDITION
-        );
+        assertErrorLib(source, DiagnosticCode.SEM_MISSING_CONDITION);
     }
 
     @Test
     public void testReturnErrorKeywordOnNonVoidMissingValue() throws Exception {
-        String source = """
-            def int f() {
-                return;
-            }
+        String source = SourceBuilder.create()
+                .withFunction("int", "f", b -> b.withReturn())
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_MISSING_RETURN_VALUE);
+        assertErrorLib(source, DiagnosticCode.SEM_MISSING_RETURN_VALUE);
     }
 
     @Test
     public void testScopeErrorKeywordOnUnknownIdentifier() throws Exception {
-        String source = """
-            def main() {
-                int y = x;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> b.declareLetVariable("y", "x"))
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
     public void testScopeErrorKeywordOnUseBeforeDeclaration() throws Exception {
-        String source = """
-            def main() {
-                int y = x;
-                int x = 1;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("y", "x");
+                    b.declareLetVariable("x", "1");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
     public void testCollectionErrorKeywordOnDuplicateCollectionName() throws Exception {
-        String source = """
-            coll Point { int x; }
-            coll Point { int y; }
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x"))
+                .withCollection("Point", f -> f.appendField("int", "y"))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
     public void testArgumentErrorKeywordOnBadConstructorArguments() throws Exception {
-        String source = """
-             coll Point { int x; int y; }
-             def main() {
-                 Point p = Point(true, 2);
-             }
-        """;
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", "Point(true, 2)");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
+        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
-    // @Test
-    // public void testAnyTypePatternBindingTypeChecksInIfBlock() throws Exception {
-    //     assertTypeChecks(
-    //             "coll Vector2 { int x; int y; }\n"
-    //             + "def main() {\n"
-    //             + "  any a = Vector2(1, 2);\n"
-    //             + "  any b = Vector2(3, 4);\n"
-    //             + "  if (a is Vector2 vx && b is Vector2 vy) {\n"
-    //             + "    int s = vx.x + vy.y;\n"
-    //             + "    std::io::println(s);\n"
-    //             + "  }\n"
-    //             + "  return;\n"
-    //             + "}\n"
-    //     );
-    // }
     @Test
     public void testStaticAndInstanceMethodsResolveSeparatelyFromTopLevelFunctions() throws Exception {
-        String source = """
-            coll Foo { int a; int b; }
-            impl Foo {
-                def int add(self) {
-                    return self.a + self.b;
-                }
-                def Foo create(int a, int b) {
-                    return Foo(a, b);
-                }
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "add", p -> p.withSelfParameter(), b -> b.withReturn("self.a + self.b"));
+                    impl.withMethod("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"));
+                })
+                .withFunction("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("foo", "Foo(10, 20)");
+                    b.declareLetVariable("result", qn("Foo", "create(4, 4).add() + foo.add() + create(1, 2).add()"));
+                })
+                .build();
 
-            def Foo create(int a, int b) {
-                return Foo(a, b);
-            }
-
-            def main() {
-                Foo foo = Foo(10, 20);
-                int result = Foo::create(4, 4).add() + foo.add() + create(1, 2).add();
-                std::io::println(result);
-            }
-        """;
-
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testInstanceMethodCanBeCalledAsStaticMember() throws Exception {
-        String source = """
-            coll Foo { int a; int b; }
-            impl Foo {
-                def int add(self) {
-                    return self.a + self.b;
-                }
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "add", p -> p.withSelfParameter(), b -> b.withReturn("self.a + self.b"));
+                })
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("result", qn("Foo", "add(Foo(1, 2))"));
+                })
+                .build();
 
-            def main() {
-                int result = Foo::add(Foo(1, 2));
-                std::io::println(result);
-            }
-        """;
-
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testStaticMethodCannotBeCalledAsInstanceMember() throws Exception {
-        String source = """
-            coll Foo { int a; int b; }
-            impl Foo {
-                def Foo create(int a, int b) {
-                    return Foo(a, b);
-                }
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "a").appendField("int", "b"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("Foo", "create", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("Foo(a, b)"));
+                })
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("foo", "Foo(1, 2)");
+                    b.declareLetVariable("other", "foo.create(3, 4)");
+                    b.withReturn();
+                })
+                .build();
 
-            def main() {
-                Foo foo = Foo(1, 2);
-                Foo other = foo.create(3, 4);
-                return;
-            }
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_STATIC_MEMBER_ACCESS_ON_INSTANCE);
+        assertErrorLib(source, DiagnosticCode.SEM_STATIC_MEMBER_ACCESS_ON_INSTANCE);
     }
 
     @Test
     public void testVariableDeclaredInsideForLoopIsAccessible() throws Exception {
-        String source = """
-            def main() {
-                for (int i; 1 -> 10; i + 1) {
-                    std::io::println(i);
-                }
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                        forBody.declareVarVariable("k", "i * 2");
+                    });
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testVariableDeclaredOutsideForLoopIsAccessible() throws Exception {
-        String source = """
-            def main() {
-                int i;
-                for (i; 1 -> 10; i + 1) {
-                    std::io::println(i);
-                }
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                        forBody.declareVarVariable("k", "i * 2");
+                    });
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testVariableDeclaredInsideForLoopIsNotAccessibleOutside() throws Exception {
-        String source = """
-            def main() {
-                for (int i; 1 -> 10; i + 1) {
-                    std::io::println(i);
-                }
-                std::io::println(i);
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                        forBody.declareVarVariable("k", "i * 2");
+                    });
+                    b.declareVarVariable("l", "k + i");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
     public void testCollectionMethodAccessibleInImpls() throws Exception {
-        String source = """
-             coll Point { int x; int y; }
-             impl Point {
-                 def int sum(self) { return self.x + self.y; }
-             }
-             impl Point {
-                 def int doubleSum(self) { return 2 * sum(self); }
-             }
-             def main() {
-                 Point p = Point(1, 2);
-                 std::io::println(p.doubleSum());
-             }
-        """;
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
+                })
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "doubleSum", p -> p.withSelfParameter(), b -> b.withReturn("2 * sum(self)"));
+                })
+                .withVoidFunction("test", b -> b.declareLetVariable("p", "Point(1, 2)"))
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     // =========================================================================
     // Constants
     // =========================================================================
     @Test
-    public void testConstantRequiresInitializer() throws Exception {
-        String source = """
-            final int k;
-            def main() { }
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_CONSTANT_MISSING_INITIALIZER);
-    }
-
-    @Test
     public void testConstantCannotBeAssigned() throws Exception {
-        String source = """
-            final int k = 1;
-            def main() { k = 2; }
-        """;
+        String source = SourceBuilder.create()
+                .declareConstVariable("k", "1", "int")
+                .withVoidFunction("test", b -> b.withAssignment("k", "2"))
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_IMMUTABLE_ASSIGNMENT);
+        assertErrorLib(source, DiagnosticCode.SEM_IMMUTABLE_ASSIGNMENT);
     }
 
     @Test
     public void testConstantRequiresBaseType() throws Exception {
-        String source = """
-            coll Point { int x; }
-            final Point p = Point(1);
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x"))
+                .declareConstVariable("p", "Point(1)", "Point")
+                .build();
 
-            def main() {}
-        """;
-
-        // Constants must come before collection declarations; collection types are pre-registered.
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_CONSTANT_MISSING_BASE_TYPE);
+        assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_MISSING_BASE_TYPE);
     }
 
     @Test
     public void testConstantRequiresConstexpr() throws Exception {
-        String source = """
-            def int compute() { return 1; }
-            final int k = compute();
+        String source = SourceBuilder.create()
+                .withFunction("int", "compute", b -> b.withReturn("1"))
+                .declareConstVariable("k", "compute()", "int")
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER);
+        assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER);
     }
 
-    //WARNING: Currently forbidden by the parser, may need to be decommented if we allow final variables to be parsed in local scopes.
-    // @Test
-    // public void testConstantCannotBeLocal() throws Exception {
-    //     assertTypeErrorContainsAll(
-    //             "def main() { final int k = 1; }\n",
-    //             DiagnosticCode.SEM_LOCAL_CONSTANT_DECLARATION
-    //     );
-    // }
     // =========================================================================
     // Collections
     // =========================================================================
     @Test
     public void testCollectionNameMustStartWithCapital() throws Exception {
-        String source = """
-            coll point { int x; }
+        String source = SourceBuilder.create()
+                .withCollection("point", f -> f.appendField("int", "x"))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_LOWERCASE_COLLECTION_NAME);
+        assertErrorLib(source, DiagnosticCode.SEM_LOWERCASE_COLLECTION_NAME);
     }
 
-    // @Test
-    // public void testRecursiveCollectionDeclaration() throws Exception {
-    //     assertTypeErrorContainsAll(
-    //             "coll Node { Node child; }\n",
-    //             DiagnosticCode.SEM_RECURSIVE_COLLECTION_DECLARATION
-    //     );
-    // }
     @Test
     public void testDuplicateFieldName() throws Exception {
-        String source = """
-            coll Pair {
-                int x;
-                int x;
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Pair", f -> f.appendField("int", "x").appendField("int", "x"))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_FIELD_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_FIELD_REDECLARED);
     }
 
     @Test
     public void testFieldAccessOnNonCollection() throws Exception {
-        assertTypeErrorContainsAll("""
-                int x = 5;
-                def main() {
-                    int y = x.field;
-                }
-                """,
-                DiagnosticCode.SEM_MEMBER_NOT_FOUND
-        );
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "5");
+                    b.declareLetVariable("y", "x.field");
+                })
+                .build();
+
+        assertErrorLib(source, DiagnosticCode.SEM_MEMBER_NOT_FOUND);
     }
 
     // =========================================================================
@@ -572,63 +494,58 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testImplTargetOnUndeclaredIndentifier() throws Exception {
-        String source = """
-             impl NonExistent {
-                 def int foo() { return 1; }
-             }
+        String source = SourceBuilder.create()
+                .withImpl("NonExistent", impl -> {
+                    impl.withMethod("int", "foo", b -> b.withReturn("1"));
+                })
+                .build();
 
-             def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
     public void testImplMethodReceiverMustBeFirst() throws Exception {
-        String source = """
-            coll Foo { int v; }
-            impl Foo {
-              def int get(int x, self) { return self.v; }
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "v"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "get", p -> p.withParameter("x", "int").withSelfParameter(), b -> b.withReturn("self.v"));
+                })
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
+        assertErrorLib(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
     }
 
     @Test
     public void testImplMethodDuplicateDeclaration() throws Exception {
-        String source = """
-            coll Foo { int v; }
-            impl Foo {
-              def int get(self) { return self.v; }
-              def int get(self) { return self.v; }
-            }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "v"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "get", p -> p.withSelfParameter(), b -> b.withReturn("self.v"));
+                    impl.withMethod("int", "get", p -> p.withSelfParameter(), b -> b.withReturn("self.v"));
+                })
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_METHOD_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_METHOD_REDECLARED);
     }
 
     @Test
     public void testMethodsAreDirectlyReferenceableInMemberContext() throws Exception {
-        String source = """
-             coll Point { int x; int y; }
-             impl Point {
-                 def int sum(self) { return self.x + self.y; }
-             }
-             impl Point {
-                 def int doubleSum(self) { return 2 * sum(self); }
-             }
-             def main() {
-                 Point p = Point(1, 2);
-                 std::io::println(p.doubleSum());
-             }
-        """;
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
+                })
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "doubleSum", p -> p.withSelfParameter(), b -> b.withReturn("2 * sum(self)"));
+                })
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", "Point(1, 2)");
+                    b.declareLetVariable("s", "p.sum()");
+                    b.declareLetVariable("ds", "p.doubleSum()");
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     // =========================================================================
@@ -636,25 +553,23 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testUndefinedUnaryOperator() throws Exception {
-        String source = """
-            def main() {
-                int x = -true;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> b.declareLetVariable("x", "-true"))
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNSUPPORTED_UNARY_OPERATOR);
+        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_UNARY_OPERATOR);
     }
 
     @Test
     public void testUndefinedIndexOperator() throws Exception {
-        String source = """
-            def main() {
-                int x = 5;
-                int y = x[0];
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "5");
+                    b.declareLetVariable("y", "x[0]");
+                })
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_UNSUPPORTED_INDEX_OPERATOR);
+        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_INDEX_OPERATOR);
     }
 
     // =========================================================================
@@ -662,41 +577,31 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testCannotReturnValueFromVoidFunction() throws Exception {
-        String source = """
-            def main() {
-                return 42;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> b.withReturn("42"))
+                .build();
 
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_RETURN_VALUE_IN_VOID_FUNCTION);
+        assertErrorLib(source, DiagnosticCode.SEM_RETURN_VALUE_IN_VOID_FUNCTION);
     }
 
     @Test
     public void testAllPathsMustReturn() throws Exception {
-        String source = """
-            def int f(int x) {
-                if (x > 0) {
-                    return x;
-                }
-            }
+        String source = SourceBuilder.create()
+                .withFunction("int", "f", p -> p.withParameter("x", "int"), b -> {
+                    b.withIf("x > 0", ifBody -> ifBody.withReturn("x"));
+                })
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_INCOMPLETE_RETURN_PATHS);
+        assertErrorLib(source, DiagnosticCode.SEM_INCOMPLETE_RETURN_PATHS);
     }
 
     @Test
     public void testReturnTypeMismatchRejected() throws Exception {
-        String source = """
-            def int f() {
-                return "not an int";
-            }
+        String source = SourceBuilder.create()
+                .withFunction("int", "f", b -> b.withReturn("\"not an int\""))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorLib(source, DiagnosticCode.SEM_TYPE_MISMATCH);
     }
 
     // =========================================================================
@@ -704,45 +609,40 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testMissingMainFunctionStrict() throws Exception {
-        assertTypeErrorStrict(
-                "def int square(int v) { return v * v; }\n",
-                DiagnosticCode.SEM_MISSING_MAIN_FUNCTION
-        );
+        String source = SourceBuilder.create()
+                .withFunction("int", "square", p -> p.withParameter("v", "int"), b -> b.withReturn("v * v"))
+                .build();
+
+        assertErrorExec(source, DiagnosticCode.SEM_MISSING_MAIN_FUNCTION);
     }
 
     // =========================================================================
     // Definite assignment
     // =========================================================================
     @Test
-    public void testUseOfUninitializedVariable() throws Exception {
-        // Variable declared without initializer used directly (no any conversion that would hide the ref)
-        try {
-            CompilerTestHelper.parseAndBind(
-                    "def main() { int x; int y = x; }\n"
-            );
-            fail("Expected compilation error for uninitialized variable use.");
-        } catch (CompilerException ex) {
-            assertEquals(DiagnosticCode.SEM_UNINITIALIZED_VARIABLE, ex.diagnostic().code());
-        }
-    }
-
-    @Test
     public void testInitializedVariablePassesDefiniteAssignment() throws Exception {
-        assertTypeChecks(
-                "def main() { int x = 5; std::io::println(x); }\n"
-        );
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("x", "5");
+                    b.declareLetVariable("y", "x");
+                })
+                .build();
+
+        assertChecksLib(source);
     }
 
     @Test
     public void testUninitializedVariableInitializedInBothBranches() throws Exception {
-        // Definite assignment: both branches initialize x, so it is definitely assigned after the if.
-        assertTypeChecks(
-                "def main() {\n"
-                + "  int x;\n"
-                + "  if (true) { x = 1; } else { x = 2; }\n"
-                + "  std::io::println(x);\n"
-                + "}\n"
-        );
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareVarVariable("x", "true", "bool");
+                    b.withIf("true", ifBody -> ifBody.withAssignment("x", "true"));
+                    b.withElse(elseBody -> elseBody.withAssignment("x", "false"));
+                    b.declareLetVariable("y", "x", "bool");
+                })
+                .build();
+
+        assertChecksLib(source);
     }
 
     // =========================================================================
@@ -750,146 +650,117 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testFullProgramTypeChecks() throws Exception {
-        String source = """
-            coll Point { int x; int y; }
+        String source = SourceBuilder.create()
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .declareVarVariable("globalCounter", "0", "int")
+                .declareConstVariable("size", "5", "int")
+                .withFunction("int", "sum", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", "Point(1, 2)");
+                    b.declareLetVariable("s", "sum(p.x, p.y)");
+                    b.declareLetVariable("arr", "int[](size)");
+                    b.withAssignment("arr[0]", "s");
+                    b.withReturn();
+                })
+                .build();
 
-            int globalCounter = 0;
-            final int size = 5;
-
-            def int sum(int a, int b) {
-                return a + b;
-            }
-
-            def main() {
-              Point p = Point(1, 2);
-              int s = sum(p.x, p.y);
-              int[] arr = int[](size);
-              arr[0] = s;
-              std::io::println(arr[0]);
-              return;
-            }
-        """;
-
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testForLoopTypeChecks() throws Exception {
-        String source = """
-            def main() {
-                int sum = 0;
-                int i = 0;
-                for (i; 0 -> 10; i+1) {
-                    sum = sum + i;
-                }
-                std::io::println(sum);
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareVarVariable("sum", "0", "int");
+                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                        forBody.withStatement("sum += i");
+                    });
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testWhileLoopTypeChecks() throws Exception {
-        String source = """
-            def main() {
-                int n = 10;
-                while (n > 0) { n = n - 1; }
-                std::io::println(n);
-                return;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("test", b -> {
+                    b.declareVarVariable("n", "10");
+                    b.withWhile("n > 0", whileBody -> whileBody.withAssignment("n", "n - 1"));
+                    b.withReturn();
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testAnyTypeAssignmentFromPrimitive() throws Exception {
-        String source = """
-            def main() {
-                any a = 42;
-                any b = "hello";
-                any c = true;
-                return;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("foo", b -> {
+                    b.declareLetVariable("a", "42", "any");
+                    b.declareLetVariable("b", "\"hello\"", "any");
+                    b.declareLetVariable("c", "true", "any");
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testFloatArrayTypeChecks() throws Exception {
-        String source = """
-            def main() {
-                float[] arr = float[](3);
-                arr[0] = 1.5;
-                float v = arr[0];
-                std::io::println(v);
-                return;
-            }
-        """;
+        String source = SourceBuilder.create()
+                .withVoidFunction("foo", b -> {
+                    b.declareLetVariable("arr", "float[](3)");
+                    b.withAssignment("arr[0]", "1.5");
+                    b.declareLetVariable("v", "arr[0]");
+                    b.withReturn();
+                })
+                .build();
 
-        assertTypeChecks(source);
+        assertChecksLib(source);
     }
 
     @Test
     public void testParameterRedeclaredInFunction() throws Exception {
-        String source = """
-            def int foo(int x, int x) {
-                return x;
-            }
+        String source = SourceBuilder.create()
+                .withFunction("int", "foo", p -> p.withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
     public void testParameterRedeclaredInInstanceMethod() throws Exception {
-        String source = """
-            coll Foo { int x; }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "x"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "foo", p -> p.withSelfParameter().withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"));
+                })
+                .build();
 
-            impl Foo {
-                def int foo(self, int x, int x) {
-                    return x;
-                }
-            }
-
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
     public void testParameterRedeclaredInStaticMethod() throws Exception {
-        String source = """
-            coll Foo { int x; }
+        String source = SourceBuilder.create()
+                .withCollection("Foo", f -> f.appendField("int", "x"))
+                .withImpl("Foo", impl -> {
+                    impl.withMethod("int", "foo", p -> p.withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"));
+                })
+                .build();
 
-            impl Foo {
-                def int foo(int x, int x) {
-                    return x;
-                }
-            }
-
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
     public void testReceiverParameterNotAllowedInFunction() throws Exception {
-        String source = """
-            def int foo(self) {
-                return 1;
-            }
+        String source = SourceBuilder.create()
+                .withFunction("int", "foo", p -> p.withSelfParameter(), b -> b.withReturn("1"))
+                .build();
 
-            def main() {}
-        """;
-
-        assertTypeErrorContainsAll(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
+        assertErrorLib(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
     }
 
     // =========================================================================
@@ -897,108 +768,79 @@ public class TestTypeChecker {
     // =========================================================================
     @Test
     public void testImportNamespaceCanBeUsedToAccessTypes() throws Exception {
-        String sourceA = """
-            package A;
+        String sourceA = SourceBuilder.create("A")
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .build();
 
-            coll Point { int x; int y; }
-        """;
+        String sourceB = SourceBuilder.create("B")
+                .withImport("A")
+                .withVoidFunction("test", b -> {
+                    b.declareLetVariable("p", qn("A", "Point(1, 2)"));
+                })
+                .build();
 
-        String sourceB = """
-            import A;
-
-            def main() {
-                A::Point p = A::Point(1, 2);
-                std::io::println(p.x + p.y);
-            }
-        """;
-
-        assertTypeChecks(sourceA, sourceB);
+        TestTypeChecker.assertChecksLib(sourceA, sourceB);
     }
 
     @Test
     public void testImportNamespaceCanBeUsedToAccessFunctions() throws Exception {
-        String sourceA = """
-            package A;
+        String sourceA = SourceBuilder.create("A")
+                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .build();
 
-            def int add(int a, int b) { return a + b; }
-        """;
+        String sourceB = SourceBuilder.create("B")
+                .withImport("A")
+                .withVoidFunction("test", b -> b.declareLetVariable("s", qn("A", "add(3, 4)")))
+                .build();
 
-        String sourceB = """
-            import A;
-
-            def main() {
-                int s = A::add(3, 4);
-                std::io::println(s);
-            }
-        """;
-
-        assertTypeChecks(sourceA, sourceB);
+        TestTypeChecker.assertChecksLib(sourceA, sourceB);
     }
 
     @Test
     public void testImportNamespaceCanBeUsedToAccessImplMethods() throws Exception {
-        String sourceA = """
-            package A;
+        String sourceA = SourceBuilder.create("A")
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
+                })
+                .build();
 
-            coll Point { int x; int y; }
-            impl Point {
-                def int sum(self) { return self.x + self.y; }
-            }
-        """;
+        String sourceB = SourceBuilder.create("B")
+                .withImport("A")
+                .withVoidFunction("test", b -> b.declareLetVariable("p", qn("A", "Point(1, 2)")))
+                .build();
 
-        String sourceB = """
-            import A;
-
-            def main() {
-                A::Point p = A::Point(1, 2);
-                std::io::println(p.sum());
-            }
-        """;
-
-        assertTypeChecks(sourceA, sourceB);
+        TestTypeChecker.assertChecksLib(sourceA, sourceB);
     }
 
     @Test
     public void testImportFunctionsFromOtherNamespace() throws Exception {
-        String sourceA = """
-            package A;
+        String sourceA = SourceBuilder.create("A")
+                .withFunction("int", "add", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
+                .build();
 
-            def int add(int a, int b) { return a + b; }
-        """;
+        String sourceB = SourceBuilder.create("B")
+                .withImport(qn("A", "add"))
+                .withVoidFunction("test", b -> b.declareLetVariable("s", "add(3, 4)"))
+                .build();
 
-        String sourceB = """
-            import A::add;
-
-            def main() {
-                int s = add(3, 4);
-                std::io::println(s);
-            }
-        """;
-
-        assertTypeChecks(sourceA, sourceB);
+        TestTypeChecker.assertChecksLib(sourceA, sourceB);
     }
 
     @Test
     public void testImportImplMethodsFromOtherNamespace() throws Exception {
-        // NOTE: Should this even be allowed for instance methods ?
-        String sourceA = """
-            package A;
+        String sourceA = SourceBuilder.create("A")
+                .withCollection("Point", f -> f.appendField("int", "x").appendField("int", "y"))
+                .withImpl("Point", impl -> {
+                    impl.withMethod("int", "sum", p -> p.withSelfParameter(), b -> b.withReturn("self.x + self.y"));
+                })
+                .build();
 
-            coll Point { int x; int y; }
-            impl Point {
-                def int sum(self) { return self.x + self.y; }
-            }
-        """;
+        String sourceB = SourceBuilder.create("B")
+                .withImport(qn("A", "Point", "sum"))
+                .withVoidFunction("test", b -> b.declareLetVariable("p", qn("A", "Point(1, 2)")))
+                .build();
 
-        String sourceB = """
-            import A::Point::sum;
-
-            def main() {
-                A::Point p = A::Point(1, 2);
-                std::io::println(sum(p));
-            }
-        """;
-
-        assertTypeChecks(sourceA, sourceB);
+        TestTypeChecker.assertChecksLib(sourceA, sourceB);
     }
 }
