@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.function.Consumer;
 
 import com.orca.compiler.core.Compilation;
 import com.orca.compiler.core.CompilationContext;
@@ -31,41 +32,15 @@ public class CompilerTestHelper {
         return CompilerArguments.fromArgs(args);
     }
 
-    public static CompilationContext createTestContext(String... sources) {
+    public static CompilationContext createTestContext(Consumer<CompilerArguments> configureArgs, String... sources) {
         CompilerArguments args = createTestArgs();
+        configureArgs.accept(args);
+
         for (String source : sources) {
             args.addSource(new StringSource(source));
         }
 
         return new CompilationContext(args);
-    }
-
-    public static String wrapInMain(String source) {
-        return String.format("""
-            package test;
-
-            def main() {
-                %s
-            }
-        """, source);
-    }
-
-    public static String appendEmptyMain(String source) {
-        return String.format("""
-            package test;
-
-            %s
-
-            def main() { }
-        """, source);
-    }
-
-    public static String formatSource(String source) {
-        return String.format("""
-            package test;
-
-            %s
-        """, source);
     }
 
     public static SyntaxTree parseSyntaxTree(String source) throws Exception {
@@ -83,29 +58,33 @@ public class CompilerTestHelper {
      * source needs to omit the 'main' function.
      */
     public static BoundProgram parseAndBind(String source) throws Exception {
-        if (!source.contains("def main()")) {
-            assert false : "Source code must contain an explicit 'def main()' function for parseAndBind. Use parseAndBindStrict if you want to allow implicit main functions.";
-        }
+        var context = createTestContext(args -> {
+        }, source);
 
-        var context = createTestContext(source);
         var compilation = new Compilation(context);
         return compilation.getBoundProgram();
     }
 
     public static BoundProgram parseAndBind(String... sources) throws Exception {
-        var context = createTestContext(sources);
+        var context = createTestContext(args -> {
+        }, sources);
+
         var compilation = new Compilation(context);
         return compilation.getBoundProgram();
     }
 
-    /**
-     * Like parseAndBind but requires an explicit 'main' function. Use this to
-     * test SEM_MISSING_MAIN_FUNCTION and other strict-mode errors.
-     */
-    public static BoundProgram parseAndBindStrict(String source) throws Exception {
-        var context = createTestContext(source);
-        var compilation = new Compilation(context);
-        return compilation.getBoundProgram();
+    public static BoundProgram parseAndBindLibrary(String source) throws Exception {
+        var context = createTestContext(args -> {
+            args.enableFlag(CompilerFlag.LIBRARY_MODE);
+        }, source);
+        return new Compilation(context).getBoundProgram();
+    }
+
+    public static BoundProgram parseAndBindLibrary(String... sources) throws Exception {
+        var context = createTestContext(args -> {
+            args.enableFlag(CompilerFlag.LIBRARY_MODE);
+        }, sources);
+        return new Compilation(context).getBoundProgram();
     }
 
     public static DiagnosticCollector getDiagnostics(CompilationContext context) {
