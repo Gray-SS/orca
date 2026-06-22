@@ -129,6 +129,12 @@ public final class BoundOperators {
         result.add(BoundOperator.Binary.LOGICAL_AND);
         result.add(BoundOperator.Binary.LOGICAL_OR);
 
+        // Define equality operators
+        registerEqualityOperator(result, LangType.String);
+        registerEqualityOperator(result, LangType.Char);
+        registerEqualityOperator(result, LangType.Bool);
+        registerEqualityOperator(result, LangType.Any);
+
         // Define numeric operators on numeric types
         for (var numericType : LangType.getNumericTypes()) {
             result.add(new BoundOperator.Binary(BinaryOperatorKind.Addition, numericType, numericType, numericType));
@@ -137,8 +143,7 @@ public final class BoundOperators {
             result.add(new BoundOperator.Binary(BinaryOperatorKind.Division, numericType, numericType, numericType));
 
             // Define comparison operators on numeric types
-            result.add(new BoundOperator.Binary(BinaryOperatorKind.Equal, LangType.Bool, numericType, numericType));
-            result.add(new BoundOperator.Binary(BinaryOperatorKind.NotEqual, LangType.Bool, numericType, numericType));
+            registerEqualityOperator(result, numericType);
             result.add(new BoundOperator.Binary(BinaryOperatorKind.LessThan, LangType.Bool, numericType, numericType));
             result.add(new BoundOperator.Binary(BinaryOperatorKind.LessThanOrEqual, LangType.Bool, numericType, numericType));
             result.add(new BoundOperator.Binary(BinaryOperatorKind.GreaterThan, LangType.Bool, numericType, numericType));
@@ -146,5 +151,10 @@ public final class BoundOperators {
         }
 
         return result;
+    }
+
+    private static void registerEqualityOperator(List<BoundOperator.Binary> operators, LangType operandType) {
+        operators.add(new BoundOperator.Binary(BinaryOperatorKind.Equal, LangType.Bool, operandType, operandType));
+        operators.add(new BoundOperator.Binary(BinaryOperatorKind.NotEqual, LangType.Bool, operandType, operandType));
     }
 }
