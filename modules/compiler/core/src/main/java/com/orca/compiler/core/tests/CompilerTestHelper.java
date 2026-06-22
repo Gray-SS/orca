@@ -12,6 +12,7 @@ import com.orca.compiler.core.CompilationPipeline;
 import com.orca.compiler.core.CompilerArguments;
 import com.orca.compiler.core.CompilerException;
 import com.orca.compiler.core.CompilerFlag;
+import com.orca.compiler.core.CompilerPaths;
 import com.orca.compiler.core.boundtree.BoundProgram;
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
@@ -24,6 +25,7 @@ import com.orca.compiler.core.diagnostics.attachments.SourceAttachment;
 import com.orca.compiler.core.diagnostics.attachments.SuggestionAttachment;
 import com.orca.compiler.core.syntax.CompilationUnit;
 import com.orca.compiler.core.syntax.SyntaxTree;
+import com.orca.compiler.core.text.FileSource;
 import com.orca.compiler.core.text.StringSource;
 
 public class CompilerTestHelper {
@@ -121,6 +123,15 @@ public class CompilerTestHelper {
             CompilerArguments args = createTestArgs();
             args.enableFlag(CompilerFlag.DEBUG);
             args.addSource(new StringSource(source));
+
+            var stdLibPath = CompilerPaths.getFromCwd("../../stdlib/src");
+            Files.walk(stdLibPath)
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".orca"))
+                    .forEach(p -> {
+                        args.addSource(new FileSource(p.toString()));
+                    });
+
             args.setOutputFile(tempDir.resolve("Program.class").toString());
 
             CompilationContext context = new CompilationContext(args);
