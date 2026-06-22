@@ -286,7 +286,7 @@ public class TestCodeGen {
 
     @Test
     public void testBooleanInequality() throws Exception {
-        assertPrintln("true =/= false", "true");
+        assertPrintln("true != false", "true");
     }
 
     // =========================================================================
