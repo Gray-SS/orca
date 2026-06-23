@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Properties;
 
 import com.google.common.base.Optional;
-import com.orca.compiler.core.CompilationContext;
-import com.orca.compiler.core.OrcaVersion;
+import com.orca.compiler.core.CompilerConstants;
+import com.orca.compiler.core.CompilerOptions;
+import com.orca.compiler.core.OutputKind;
 import com.orca.compiler.core.text.TextSource;
 
 /**
@@ -30,17 +31,20 @@ public record CompilationMetadata(
 
     public static final String RESOURCE_PATH = "META-INF/orca/compilation.properties";
 
-    @SuppressWarnings("null")
-    public static CompilationMetadata of(CompilationContext context, List<String> emittedTypes) {
-        List<String> sourceNames = context.arguments().getSources().stream()
+    public static CompilationMetadata of(CompilerOptions options, List<String> emittedTypes) {
+        List<String> sourceNames = options.getSources().stream()
                 .map(TextSource::name)
                 .toList();
 
+        Optional<String> mainClass = options.getOutputKind() == OutputKind.APPLICATION
+                ? Optional.of(CompilerConstants.DEFAULT_ENTRY_CLASS_NAME)
+                : Optional.absent();
+
         return new CompilationMetadata(
-                OrcaVersion.COMPILER_VERSION,
-                OrcaVersion.LANGUAGE_VERSION,
+                CompilerConstants.COMPILER_VERSION,
+                CompilerConstants.LANGUAGE_VERSION,
                 Instant.now(),
-                Optional.fromNullable(context.getMainClassName()),
+                mainClass,
                 sourceNames,
                 emittedTypes
         );

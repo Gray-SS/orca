@@ -3,6 +3,7 @@ package com.orca.compiler.core.symbols.synthesized;
 import java.util.List;
 
 import com.orca.compiler.core.Compilation;
+import com.orca.compiler.core.CompilerConstants;
 import com.orca.compiler.core.symbols.ExtensionSymbol;
 import com.orca.compiler.core.symbols.MethodSymbol;
 import com.orca.compiler.core.symbols.NamespaceOrTypeSymbol;
@@ -14,13 +15,11 @@ import com.orca.compiler.core.typesystem.NominalType;
 
 public class SynthesizedEntryClassSymbol implements SynthesizedSymbol, TypeSymbol {
 
-    private final String name;
     private final SymbolScope members;
     private final Compilation compilation;
     private final MethodSymbol mainMethodSymbol;
 
-    public SynthesizedEntryClassSymbol(String name, Compilation compilation, MethodSymbol mainMethodSymbol) {
-        this.name = name;
+    public SynthesizedEntryClassSymbol(Compilation compilation, MethodSymbol mainMethodSymbol) {
         this.compilation = compilation;
         this.members = new SymbolScope();
         this.mainMethodSymbol = mainMethodSymbol;
@@ -28,7 +27,7 @@ public class SynthesizedEntryClassSymbol implements SynthesizedSymbol, TypeSymbo
 
     @Override
     public String name() {
-        return name;
+        return CompilerConstants.DEFAULT_ENTRY_CLASS_NAME;
     }
 
     public MethodSymbol getMainMethodSymbol() {
@@ -48,7 +47,7 @@ public class SynthesizedEntryClassSymbol implements SynthesizedSymbol, TypeSymbo
 
     @Override
     public LangType type() {
-        return new NominalType(name, LangType.Unknown);
+        return new NominalType(CompilerConstants.DEFAULT_ENTRY_CLASS_NAME, LangType.Unknown);
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.orca.compiler.core;
 
-import java.nio.file.Files;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 
 import com.orca.compiler.core.boundtree.BoundExpression;
 import com.orca.compiler.core.boundtree.BoundMethod;
@@ -13,11 +15,13 @@ import com.orca.compiler.core.boundtree.expressions.BoundMethodCallExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundReferenceExpr;
 import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.boundtree.statements.BoundExpressionStmt;
+import com.orca.compiler.core.codegen.ClassDirWriter;
+import com.orca.compiler.core.codegen.CompilationMetadata;
+import com.orca.compiler.core.codegen.Emitter;
+import com.orca.compiler.core.codegen.JarPackager;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.diagnostics.DiagnosticFactory;
-import com.orca.compiler.core.externals.ClassPath;
 import com.orca.compiler.core.externals.ExternalSymbolResolver;
-import com.orca.compiler.core.io.EnhancedSyntaxTreePrinter;
 import com.orca.compiler.core.semantics.SemanticModel;
 import com.orca.compiler.core.symbols.NamespaceOrTypeSymbol;
 import com.orca.compiler.core.symbols.NamespaceSymbol;
@@ -38,59 +42,40 @@ import com.orca.compiler.core.syntax.nodes.QualifiedIdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.SimpleIdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.SpecialTypeIdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.VariableDeclaratorSyntax;
-import com.orca.compiler.core.text.FileSource;
 import com.orca.compiler.core.text.TextSource;
 import com.orca.compiler.core.typesystem.ArrayType;
 import com.orca.compiler.core.typesystem.LangType;
 
 public final class Compilation {
 
-    public static final String ORCA_ENTRY_CLASS_NAME = "OrcaEntry";
-    public static final String ORCA_ENTRY_METHOD_NAME = "main";
+    private final CompilerOptions options;
 
-    private final GlobalNamespaceSymbol globalNamespace;
-
-    private final DiagnosticCollector diagnostics;
+    private final ExternalSymbolResolver resolver;
     private final List<SemanticModel> semanticModels;
 
-    private final CompilationContext context;
-    private final ExternalSymbolResolver resolver;
     private final TypeRegistry typeRegistry = new TypeRegistry(this);
+    private final GlobalNamespaceSymbol globalNamespace = new GlobalNamespaceSymbol(this);
 
-    private BoundProgram boundProgram;
+    private CompilationResult<BoundProgram> cachedBoundProgramResult;
 
     private boolean declarationsComplete = false;
-    private boolean boundProgramConstructed = false;
+    private boolean boundProgramComputed = false;
 
-    public Compilation(CompilationContext context) {
-        this.diagnostics = context.diagnostics();
-        this.context = context;
-        this.globalNamespace = new GlobalNamespaceSymbol(this);
-        this.semanticModels = initializeSemanticModels(context.arguments());
-        this.resolver = initializeExternalSymbolResolver(context.arguments());
-    }
-
-    private static ExternalSymbolResolver initializeExternalSymbolResolver(CompilerArguments args) {
-        var classPathIndices = getClassPathIndices(args);
-        var includeJdk = true; // TODO: Make this configurable via compiler arguments if needed.
-
-        return new ExternalSymbolResolver(classPathIndices, includeJdk);
-    }
-
-    private static Set<ClassPath> getClassPathIndices(CompilerArguments args) {
-        return args.getClassPaths()
-                .stream()
-                .map(path -> ClassPath.of(path))
-                .collect(java.util.stream.Collectors.toSet());
+    public Compilation(CompilerOptions options) {
+        this.options = options;
+        this.semanticModels = initializeSemanticModels(options);
+        this.resolver = new ExternalSymbolResolver(options.getClassPaths(), options.includeJdk());
     }
 
     public List<SyntaxTree> getSyntaxTrees() {
-        return semanticModels.stream().map(SemanticModel::getSyntaxTree).toList();
+        return semanticModels.stream()
+                .map(SemanticModel::getSyntaxTree)
+                .toList();
     }
 
     public SemanticModel getSemanticModel(TextSource source) {
         for (var semanticModel : semanticModels) {
-            if (semanticModel.getSyntaxTree().source() == source) {
+            if (semanticModel.getSource() == source) {
                 return semanticModel;
             }
         }
@@ -99,47 +84,118 @@ public final class Compilation {
     }
 
     public SemanticModel getSemanticModel(SyntaxTree syntaxTree) {
-        for (var semanticModel : semanticModels) {
-            if (semanticModel.getSyntaxTree() == syntaxTree) {
-                return semanticModel;
-            }
-        }
-
-        throw new IllegalArgumentException("No semantic model found for syntax tree: " + syntaxTree);
+        return getSemanticModel(syntaxTree.source());
     }
 
-    public BoundProgram getBoundProgram() {
-        if (boundProgramConstructed) {
-            return boundProgram;
+    public CompilationResult<BoundProgram> getBoundProgram() {
+        if (!boundProgramComputed) {
+            cachedBoundProgramResult = computeBoundProgram();
+            boundProgramComputed = true;
         }
 
-        ensureDeclarationsComplete();
+        return cachedBoundProgramResult;
+    }
 
-        var boundNamespace = new BoundNamespace(globalNamespace);
-        for (SemanticModel semanticModel : semanticModels) {
-            semanticModel.bind(boundNamespace);
+    private CompilationResult<BoundProgram> computeBoundProgram() {
+        var diagnostics = new DiagnosticCollector();
+
+        try {
+            ensureDeclarationsComplete();
+
+            var boundNamespace = new BoundNamespace(globalNamespace);
+            for (SemanticModel semanticModel : semanticModels) {
+                var bindingResult = semanticModel.bindFullSemanticModel();
+                diagnostics = DiagnosticCollector.merge(diagnostics, bindingResult.diagnostics());
+
+                if (bindingResult instanceof CompilationResult.Success<BoundNamespace> success) {
+                    var boundNamespaceFromModel = success.value();
+                    if (boundNamespaceFromModel.getSymbol().isGlobalNamespace()) {
+                        boundNamespaceFromModel.getMethods().forEach(boundNamespace::addMethod);
+                        boundNamespaceFromModel.getTypes().forEach(boundNamespace::addType);
+                        boundNamespaceFromModel.getVariables().forEach(boundNamespace::addVariable);
+                        boundNamespaceFromModel.getNamespaces().forEach(boundNamespace::addNamespace);
+                    } else {
+                        boundNamespace.addNamespace(boundNamespaceFromModel);
+                    }
+                }
+            }
+
+            for (var extension : collectExtensions()) {
+                bindExtension(boundNamespace, extension);
+            }
+
+            if (options.getOutputKind() == OutputKind.APPLICATION) {
+                var entryClassSymbol = getEntryClassSymbol();
+                var boundEntryClass = bindEntryClassSymbol(boundNamespace, entryClassSymbol);
+                boundNamespace.addType(boundEntryClass);
+            }
+
+            var boundProgram = new BoundProgram(boundNamespace);
+            if (diagnostics.hasErrors()) {
+                return CompilationResult.failure(diagnostics);
+            }
+
+            return CompilationResult.success(diagnostics, boundProgram);
+        } catch (CompilerException e) {
+            diagnostics.report(e.diagnostic());
+            return CompilationResult.failure(diagnostics);
         }
+    }
 
-        for (var extension : collectExtensions()) {
-            bindExtension(boundNamespace, extension);
+    /**
+     * Compiles the program and emits the output to the specified output path.
+     * If there are any compilation errors, they will be reported to the
+     * diagnostics collector.
+     *
+     * @return true if the compilation was successful, false otherwise
+     */
+    public CompilationResult<Void> compile() {
+        var boundProgramResult = getBoundProgram();
+
+        switch (boundProgramResult) {
+            case CompilationResult.Failure<BoundProgram> failure -> {
+                return CompilationResult.failure(failure.diagnostics());
+            }
+            case CompilationResult.Success<BoundProgram> success -> {
+                var boundProgram = success.value();
+                var compilationDiagnostics = DiagnosticCollector.copyOf(boundProgramResult.diagnostics());
+
+                switch (options.getOutputFormat()) {
+                    case JAR -> {
+                        try {
+                            emitJar(boundProgram, options.getOutputPath());
+                        } catch (IOException e) {
+                            compilationDiagnostics.report(DiagnosticFactory.inputIoError(e.getMessage()));
+                            return CompilationResult.failure(compilationDiagnostics);
+                        }
+                    }
+                    case CLASS_DIRECTORY -> {
+                        emitClasses(boundProgram, options.getOutputPath());
+                    }
+                }
+
+                return CompilationResult.success(compilationDiagnostics);
+            }
         }
+    }
 
-        if (!context.arguments().hasFlag(CompilerFlag.LIBRARY_MODE)) {
-            var entryClassSymbol = getEntryClassSymbol();
-            var boundEntryClass = bindEntryClassSymbol(boundNamespace, entryClassSymbol);
-            boundNamespace.addType(boundEntryClass);
-        }
+    private void emitJar(BoundProgram program, Path outputPath) throws IOException {
+        var classes = new LinkedHashMap<String, byte[]>();
+        new Emitter(program, classes::put).emit();
 
-        boundProgram = new BoundProgram(boundNamespace);
-        boundProgramConstructed = true;
-        return boundProgram;
+        var metadata = CompilationMetadata.of(options, new ArrayList<>(classes.keySet()));
+        JarPackager.pack(outputPath, metadata, classes);
+    }
+
+    private void emitClasses(BoundProgram program, Path outputPath) {
+        new Emitter(program, new ClassDirWriter(outputPath)).emit();
     }
 
     private BoundType bindEntryClassSymbol(BoundNamespace boundNamespace, SynthesizedEntryClassSymbol entryClassSymbol) {
         var boundEntryClass = new BoundType(boundNamespace, entryClassSymbol);
         var mainMethodSymbol = entryClassSymbol.getMainMethodSymbol();
 
-        var entryMainMethodSymbol = new SynthesizedMethodSymbol(entryClassSymbol, ORCA_ENTRY_METHOD_NAME, LangType.Void, List.of(LangType.arrayOf(LangType.String)), SymbolModifiers.STATIC);
+        var entryMainMethodSymbol = new SynthesizedMethodSymbol(entryClassSymbol, CompilerConstants.DEFAULT_ENTRY_METHOD, LangType.Void, List.of(LangType.arrayOf(LangType.String)), SymbolModifiers.STATIC);
         var argsParameter = entryMainMethodSymbol.getParameter(0);
 
         // Only forward String[] args if the user's main actually accepts them.
@@ -219,14 +275,14 @@ public final class Compilation {
         var mainFunction = mainCandidates.get(0);
         mainFunction.markAsEntryPoint();
 
-        return new SynthesizedEntryClassSymbol(ORCA_ENTRY_CLASS_NAME, this, mainFunction);
+        return new SynthesizedEntryClassSymbol(this, mainFunction);
     }
 
     private List<SourceMethodSymbol> findMainFunctionCandidates() {
         var candidates = new java.util.ArrayList<SourceMethodSymbol>();
 
         for (var member : globalNamespace.getMembersWithChildren()) {
-            if (!member.name().equals("main")) {
+            if (!member.name().equals(CompilerConstants.DEFAULT_ENTRY_METHOD)) {
                 continue;
             }
 
@@ -299,50 +355,22 @@ public final class Compilation {
         return typeRegistry;
     }
 
-    public CompilationContext getContext() {
-        return context;
+    // public DiagnosticCollector diagnostics() {
+    //     return diagnostics;
+    // }
+    public CompilerOptions options() {
+        return options;
     }
 
     public GlobalNamespaceSymbol getGlobalNamespace() {
         return globalNamespace;
     }
 
-    private List<SemanticModel> initializeSemanticModels(CompilerArguments args) {
+    private List<SemanticModel> initializeSemanticModels(CompilerOptions options) {
         var result = new java.util.ArrayList<SemanticModel>();
-        var seenSourcesPaths = new java.util.HashSet<String>();
 
-        var allSources = new java.util.ArrayList<TextSource>();
-        allSources.addAll(args.getSources());
-
-        for (var source : allSources) {
-            if (source instanceof FileSource fileSource) {
-                if (!seenSourcesPaths.add(fileSource.getPath().toAbsolutePath().normalize().toString())) {
-                    Debug.warning("Duplicate source file ignored: " + fileSource.getPathString());
-                    continue; // Skip duplicate source
-                }
-
-                if (!Files.exists(fileSource.getPath())) {
-                    throw CompilerException.wrap(DiagnosticFactory.inputFileNotFound(fileSource.getPath()));
-                }
-
-                if (!Files.isRegularFile(fileSource.getPath())) {
-                    throw CompilerException.wrap(DiagnosticFactory.inputFileNotFound(fileSource.getPath()));
-                }
-            }
-
-            source.validate();
-
-            var syntaxTree = SyntaxTree.parse(diagnostics, source);
-            var semanticModel = new SemanticModel(this, syntaxTree);
-
-            result.add(semanticModel);
-        }
-
-        if (args.hasFlag(CompilerFlag.PRINT_AST)) {
-            for (var semanticModel : result) {
-                var syntaxTree = semanticModel.getSyntaxTree();
-                EnhancedSyntaxTreePrinter.print(syntaxTree, args.getIndentSize());
-            }
+        for (var source : options.getSources()) {
+            result.add(new SemanticModel(this, source));
         }
 
         return result;
@@ -381,24 +409,9 @@ public final class Compilation {
 
         declarationsComplete = true;
 
-        // 1. Register lazy imports
-        for (var semanticModel : semanticModels) {
-            semanticModel.resolveImports();
-        }
-
-        // 2. Declare all types
-        for (var semanticModel : semanticModels) {
-            semanticModel.declareTypes();
-        }
-
-        // 3. Declare methods (after all types are resolved to allow method signatures to reference other types)
-        for (var semanticModel : semanticModels) {
-            semanticModel.declareMethods();
-        }
-
-        // 4. Declare remaining symbols
-        for (var semanticModel : semanticModels) {
-            semanticModel.declareRemainingSymbols();
-        }
+        semanticModels.forEach(SemanticModel::resolveImports); // 1. Register lazy imports
+        semanticModels.forEach(SemanticModel::declareTypes); // 2. Declare all types
+        semanticModels.forEach(SemanticModel::declareMethods); // 3. Declare methods
+        semanticModels.forEach(SemanticModel::declareRemainingSymbols); // 4. Declare remaining symbols
     }
 }

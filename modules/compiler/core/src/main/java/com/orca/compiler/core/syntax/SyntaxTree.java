@@ -8,9 +8,10 @@ public class SyntaxTree {
 
     private final TextSource source;
     private final SyntaxNode root;
+
     private final DiagnosticCollector diagnostics;
 
-    public SyntaxTree(SyntaxNode root, DiagnosticCollector diagnostics) {
+    public SyntaxTree(DiagnosticCollector diagnostics, SyntaxNode root) {
         this.root = root;
         this.source = root.source();
         this.diagnostics = diagnostics;
@@ -36,13 +37,14 @@ public class SyntaxTree {
         return result != null ? result : this.root;
     }
 
-    public static SyntaxTree parse(DiagnosticCollector diagnostics, TextSource source) {
+    public static SyntaxTree parse(TextSource source) {
+        var diagnostics = new DiagnosticCollector();
         Parser parser = new Parser(new Lexer(source, diagnostics), diagnostics);
-        return new SyntaxTree(parser.parseCompilationUnit(), diagnostics);
+        return new SyntaxTree(diagnostics, parser.parseCompilationUnit());
     }
 
-    public DiagnosticCollector diagnostics() {
-        return diagnostics;
+    public DiagnosticCollector getDiagnostics() {
+        return DiagnosticCollector.copyOf(diagnostics);
     }
 
     public TextSource source() {

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import com.orca.compiler.core.Compilation;
+import com.orca.compiler.core.CompilationResult;
 import com.orca.compiler.core.CompilerException;
 import com.orca.compiler.core.Debug;
 import com.orca.compiler.core.bindings.Binder;
@@ -27,6 +28,7 @@ import com.orca.compiler.core.boundtree.BoundVariable;
 import com.orca.compiler.core.boundtree.statements.BoundBlockStmt;
 import com.orca.compiler.core.controlflow.ControlFlowGraph;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
+import com.orca.compiler.core.diagnostics.DiagnosticFactory;
 import com.orca.compiler.core.lexer.TokenKind;
 import com.orca.compiler.core.symbols.CallableSymbol;
 import com.orca.compiler.core.symbols.Lazy;
@@ -67,26 +69,42 @@ public final class SemanticModel {
     private final Map<SyntaxNode, Binder> bindersCache = new java.util.HashMap<>();
     private final Map<SyntaxNode, Symbol> symbolCache = new java.util.HashMap<>();
 
-    private final DiagnosticCollector diagnostics;
+    private final DiagnosticCollector declarationDiagnostics;
 
-    private final SyntaxTree syntaxTree;
     private final Compilation compilation;
+    private final TextSource source;
 
     private GlobalBinder globalBinder;
-    private boolean importsResolved = false;
 
-    public SemanticModel(Compilation compilation, SyntaxTree syntaxTree) {
-        this.syntaxTree = syntaxTree;
+    private boolean fullSemanticModelBound = false;
+
+    private SyntaxTree cachedSyntaxTree;
+    private CompilationResult<BoundNamespace> cachedBoundSemanticModelResult;
+
+    private boolean importsResolved = false;
+    private boolean typesDeclared = false;
+    private boolean methodsDeclared = false;
+    private boolean remainingSymbolsDeclared = false;
+
+    public SemanticModel(Compilation compilation, TextSource source) {
+        Preconditions.checkNotNull(compilation, "Compilation cannot be null");
+        Preconditions.checkNotNull(source, "TextSource cannot be null");
+
+        this.source = source;
         this.compilation = compilation;
-        this.diagnostics = new DiagnosticCollector();
+        this.declarationDiagnostics = new DiagnosticCollector();
     }
 
     public SyntaxTree getSyntaxTree() {
-        return syntaxTree;
+        if (cachedSyntaxTree == null) {
+            cachedSyntaxTree = SyntaxTree.parse(source);
+        }
+
+        return cachedSyntaxTree;
     }
 
     public TextSource getSource() {
-        return syntaxTree.source();
+        return source;
     }
 
     public Compilation getCompilation() {
@@ -94,11 +112,13 @@ public final class SemanticModel {
     }
 
     public DiagnosticCollector getDiagnostics() {
-        return diagnostics;
+        var boundDiagnostics = bindFullSemanticModel().diagnostics();
+        var syntaxTree = getSyntaxTree();
+        return DiagnosticCollector.merge(syntaxTree.getDiagnostics(), declarationDiagnostics, boundDiagnostics);
     }
 
     public CompilationUnit getCompilationUnit() {
-        var root = syntaxTree.root();
+        var root = getSyntaxTree().root();
         if (root instanceof CompilationUnit unit) {
             return unit;
         }
@@ -177,11 +197,12 @@ public final class SemanticModel {
     public SyntaxNode getSyntaxAtLocation(SourceLocation location) {
         Preconditions.checkArgument(location != null, "Source location cannot be null");
 
-        if (location.source() != syntaxTree.source()) {
+        if (location.source() != source) {
             throw new IllegalArgumentException("Source location does not belong to the syntax tree's source");
         }
 
-        int position = syntaxTree.source().getOffset(location);
+        int position = source.getOffset(location);
+        var syntaxTree = getSyntaxTree();
         return syntaxTree.getSyntaxAtPositionForCompletion(position);
     }
 
@@ -219,6 +240,11 @@ public final class SemanticModel {
     }
 
     public void declareTypes() throws CompilerException {
+        if (typesDeclared) {
+            return;
+        }
+
+        typesDeclared = true;
         var unit = getCompilationUnit();
         MemberBinder gbinder = (MemberBinder) getBinder(unit);
 
@@ -230,6 +256,11 @@ public final class SemanticModel {
     }
 
     public void declareRemainingSymbols() throws CompilerException {
+        if (remainingSymbolsDeclared) {
+            return;
+        }
+
+        remainingSymbolsDeclared = true;
         var unit = getCompilationUnit();
         MemberBinder gbinder = (MemberBinder) getBinder(unit);
 
@@ -246,11 +277,8 @@ public final class SemanticModel {
         }
 
         importsResolved = true;
-
         var unit = getCompilationUnit();
-
-        // Force initialization of the global binder
-        getBinder(unit);
+        getBinder(unit); // Force initialization of the global binder
 
         var seenImports = new HashSet<String>();
         for (var importSyntax : unit.imports()) {
@@ -275,35 +303,63 @@ public final class SemanticModel {
         return importedSymbol;
     }
 
-    public void bind(BoundNamespace globalBoundNamespace) {
+    public CompilationResult<BoundNamespace> bindFullSemanticModel() {
+        if (fullSemanticModelBound) {
+            return cachedBoundSemanticModelResult;
+        }
+
+        ensureDeclarationsComplete();
+
+        var bindingDiagnostics = DiagnosticCollector.copyOf(declarationDiagnostics);
+        if (bindingDiagnostics.hasErrors()) {
+            cachedBoundSemanticModelResult = CompilationResult.failure(bindingDiagnostics);
+            return cachedBoundSemanticModelResult;
+        }
+
         var unit = getCompilationUnit();
         var topLevelStatements = unit.topLevelStatements();
 
         if (!topLevelStatements.isEmpty()) {
-            throw SemanticErrors.topLevelStatementsNotAllowed(topLevelStatements);
+            bindingDiagnostics.report(DiagnosticFactory.topLevelStatementsNotAllowed(topLevelStatements));
         }
 
-        var boundNamespace = globalBoundNamespace;
+        var boundGlobalNamespace = new BoundNamespace(compilation.getGlobalNamespace());
+        var boundNamespace = boundGlobalNamespace;
+
         if (unit.packageDirectiveSyntax().isPresent()) {
             var identifier = unit.packageDirectiveSyntax().get().packageIdentifier();
             var packageNamespace = compilation.getOrCreatePackageNamespace(identifier);
-            boundNamespace = getOrCreateBoundNamespace(globalBoundNamespace, packageNamespace);
+            boundNamespace = getOrCreateBoundNamespace(boundGlobalNamespace, packageNamespace);
         } else {
-            throw SemanticErrors.missingPackageDirective(getSource());
+            bindingDiagnostics.report(DiagnosticFactory.missingPackageDirective(source));
         }
 
         for (var stmt : unit.members()) {
-            switch (stmt) {
-                case CollectionDeclarationSyntax collectionDecl ->
-                    bindTypeDecl(boundNamespace, collectionDecl);
-                case MethodDeclarationSyntax methodDecl ->
-                    bindMethodDecl(boundNamespace, methodDecl);
-                case VariableDeclarationSyntax constantVariableDecl ->
-                    bindVariableDecl(boundNamespace, constantVariableDecl.variableDeclarator());
-                default -> {
+            try {
+                switch (stmt) {
+                    case CollectionDeclarationSyntax collectionDecl ->
+                        bindTypeDecl(boundNamespace, collectionDecl);
+                    case MethodDeclarationSyntax methodDecl ->
+                        bindMethodDecl(boundNamespace, methodDecl);
+                    case VariableDeclarationSyntax constantVariableDecl ->
+                        bindVariableDecl(boundNamespace, constantVariableDecl.variableDeclarator());
+                    default -> {
+                    }
                 }
+            } catch (CompilerException e) {
+                bindingDiagnostics.report(e.diagnostic());
             }
         }
+
+        fullSemanticModelBound = true;
+
+        if (bindingDiagnostics.hasErrors()) {
+            cachedBoundSemanticModelResult = CompilationResult.failure(bindingDiagnostics);
+        } else {
+            cachedBoundSemanticModelResult = CompilationResult.success(bindingDiagnostics, boundNamespace);
+        }
+
+        return cachedBoundSemanticModelResult;
     }
 
     private BoundNamespace getOrCreateBoundNamespace(BoundNamespace globalBound, NamespaceSymbol ns) {
@@ -347,7 +403,7 @@ public final class SemanticModel {
             }
 
             var declaration = sourceSymbol.declaringSyntax();
-            if (declaration.source() != syntaxTree.source()) {
+            if (declaration.source() != source) {
                 // This member will be handled by another SemanticModel.
                 continue;
             }
@@ -453,18 +509,28 @@ public final class SemanticModel {
     }
 
     public void declareMethods() throws CompilerException {
-        var unit = getCompilationUnit();
-        MemberBinder gbinder = (MemberBinder) getBinder(unit);
+        if (methodsDeclared) {
+            return;
+        }
 
-        for (var member : unit.members()) {
-            switch (member) {
-                case MethodDeclarationSyntax methodDecl ->
-                    declareNamespaceMethod(gbinder, methodDecl);
-                case ImplBlockSyntax implBlock ->
-                    declareTypeMembers(gbinder, implBlock, true);
-                default -> {
+        methodsDeclared = true;
+
+        try {
+            var unit = getCompilationUnit();
+            MemberBinder gbinder = (MemberBinder) getBinder(unit);
+
+            for (var member : unit.members()) {
+                switch (member) {
+                    case MethodDeclarationSyntax methodDecl ->
+                        declareNamespaceMethod(gbinder, methodDecl);
+                    case ImplBlockSyntax implBlock ->
+                        declareTypeMembers(gbinder, implBlock, true);
+                    default -> {
+                    }
                 }
             }
+        } catch (CompilerException e) {
+            declarationDiagnostics.report(e.diagnostic());
         }
     }
 
