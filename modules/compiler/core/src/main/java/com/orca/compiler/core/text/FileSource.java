@@ -45,13 +45,6 @@ public class FileSource extends TextSource {
         return Files.exists(getPath());
     }
 
-    @Override
-    public void validate() {
-        if (!exists()) {
-            throw new CompilerException(DiagnosticFactory.inputFileNotFound(getPath()));
-        }
-    }
-
     private static String readFileContent(Path path) {
         try {
             return java.nio.file.Files.readString(path);
