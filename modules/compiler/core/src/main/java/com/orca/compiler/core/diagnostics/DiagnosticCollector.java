@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.orca.compiler.core.diagnostics.attachments.DiagnosticAttachment;
 import com.orca.compiler.core.lexer.TokenKind;
@@ -18,6 +19,35 @@ import com.orca.compiler.core.typesystem.LangType;
 public class DiagnosticCollector implements Iterable<Diagnostic> {
 
     private final List<Diagnostic> diagnostics = new ArrayList<>();
+
+    public static DiagnosticCollector copyOf(DiagnosticCollector other) {
+        var copy = new DiagnosticCollector();
+        copy.diagnostics.addAll(other.diagnostics);
+        return copy;
+    }
+
+    public static DiagnosticCollector merge(DiagnosticCollector first, DiagnosticCollector second) {
+        var merged = new DiagnosticCollector();
+        merged.diagnostics.addAll(first.diagnostics);
+        merged.diagnostics.addAll(second.diagnostics);
+        return merged;
+    }
+
+    public static DiagnosticCollector merge(DiagnosticCollector... collectors) {
+        var merged = new DiagnosticCollector();
+        for (DiagnosticCollector collector : collectors) {
+            merged.diagnostics.addAll(collector.diagnostics);
+        }
+        return merged;
+    }
+
+    public boolean hasAny() {
+        return !diagnostics.isEmpty();
+    }
+
+    public Stream<Diagnostic> stream() {
+        return diagnostics.stream();
+    }
 
     public List<Diagnostic> getErrors() {
         return diagnostics.stream()
