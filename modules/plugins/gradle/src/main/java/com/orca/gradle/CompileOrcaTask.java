@@ -12,10 +12,12 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 
-import com.orca.compiler.core.CompilationContext;
-import com.orca.compiler.core.CompilationPipeline;
-import com.orca.compiler.core.CompilerArguments;
+import com.orca.compiler.core.Compilation;
+import com.orca.compiler.core.CompilerOptions;
+import com.orca.compiler.core.OutputFormat;
+import com.orca.compiler.core.OutputKind;
 import com.orca.compiler.core.diagnostics.DiagnosticSeverity;
+import com.orca.compiler.core.externals.ClassPath;
 import com.orca.compiler.core.text.FileSource;
 
 @CacheableTask
@@ -34,36 +36,39 @@ public abstract class CompileOrcaTask extends org.gradle.api.DefaultTask {
 
     @TaskAction
     public void compile() {
-        var args = new CompilerArguments();
+        var optionsBuilder = CompilerOptions.builder()
+                .setOutputKind(OutputKind.APPLICATION)
+                .setOutputFormat(OutputFormat.JAR);
 
         getSources().getFiles().stream()
                 .filter(f -> f.getName().endsWith(OrcaPlugin.ORCA_FILE_EXTENSION) && f.exists())
-                .forEach(f -> args.addSource(new FileSource(f.getAbsolutePath())));
+                .forEach(f -> optionsBuilder.addSource(new FileSource(f.getAbsolutePath())));
 
         getClasspath().getFiles().stream()
                 .filter(f -> f.getName().endsWith(".jar") && f.exists())
-                .forEach(f -> args.addClassPath(f.getAbsolutePath()));
+                .forEach(f -> optionsBuilder.addClassPath(ClassPath.of(f.toPath())));
 
         File output = getOutputFile().get().getAsFile();
         output.getParentFile().mkdirs();
-        args.setOutputFile(output.getAbsolutePath());
+        optionsBuilder.setOutputPath(output.toPath().toAbsolutePath());
 
-        var context = new CompilationContext(args);
-        var pipeline = new CompilationPipeline(context);
-        boolean success = pipeline.compile();
+        var options = optionsBuilder.build();
+        var compilation = new Compilation(options);
+        var compilationResult = compilation.compile();
 
-        if (!success) {
-            var diagnostics = context.diagnostics();
-            for (var diag : diagnostics) {
-                String msg = "[" + diag.code() + "] " + diag.message();
-                if (diag.severity() == DiagnosticSeverity.ERROR) {
-                    getLogger().error(msg);
-                } else {
-                    getLogger().warn(msg);
-                }
+        var diagnostics = compilationResult.diagnostics();
+        for (var diag : diagnostics) {
+            String msg = "[" + diag.code() + "] " + diag.message();
+            if (diag.severity() == DiagnosticSeverity.ERROR) {
+                getLogger().error(msg);
+            } else {
+                getLogger().warn(msg);
             }
+        }
+
+        if (compilationResult.isFailure()) {
             throw new GradleException("Orca compilation failed with "
-                    + diagnostics.countErrors() + " error(s).");
+                    + compilationResult.diagnostics().countErrors() + " error(s).");
         }
     }
 }

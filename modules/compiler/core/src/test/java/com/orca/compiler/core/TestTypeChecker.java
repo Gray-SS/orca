@@ -1,11 +1,12 @@
 package com.orca.compiler.core;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
+import com.orca.compiler.core.diagnostics.Diagnostic;
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
+import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.tests.CompilerTestHelper;
 import com.orca.compiler.core.tests.SourceBuilder;
 
@@ -23,50 +24,49 @@ public class TestTypeChecker {
         return functionName + "(" + String.join(", ", args) + ")";
     }
 
-    private static void assertChecksLib(String source) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBindLibrary(source);
-        } catch (CompilerException e) {
-            CompilerTestHelper.throwReadableDiagnosticException(e);
-            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
-        }
+    private static void assertChecksForLibrary(String... sources) throws Exception {
+        var result = CompilerTestHelper.parseAndBindLibrary(sources);
+        assertTrue("Expected type check to succeed, but it failed with diagnostics: " + formatDiagnosticList(result.diagnostics()), result.isSuccess());
     }
 
-    private static void assertChecksLib(String... sources) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBindLibrary(sources);
-        } catch (CompilerException e) {
-            CompilerTestHelper.throwReadableDiagnosticException(e);
-            fail("Expected type check to succeed, but it failed with: " + e.getMessage());
+    private static void assertErrorForLibrary(String source, DiagnosticCode expectedCode) throws Exception {
+        var result = CompilerTestHelper.parseAndBindLibrary(source);
+        assertTrue("Expected type check to fail, but it succeeded. Diagnostics: " + formatDiagnosticList(result.diagnostics()) + "\nSource:\n " + source, result.isFailure());
+
+        var diagnostics = result.diagnostics();
+        Diagnostic foundDiagnostic = null;
+        for (Diagnostic diagnostic : diagnostics) {
+            if (diagnostic.code() == expectedCode) {
+                foundDiagnostic = diagnostic;
+                break;
+            }
         }
+
+        assertNotNull("Expected diagnostic with code '" + expectedCode + "' but found: " + formatDiagnosticList(diagnostics) + ".", foundDiagnostic);
     }
 
-    private static void assertErrorLib(String source, DiagnosticCode expectedCode) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBindLibrary(source);
-            fail("Expected CompilerException with diagnostic code '" + expectedCode + "' but type check succeeded.");
-        } catch (CompilerException ex) {
-            assertNotNull("Expected a diagnostic on the CompilerException", ex.diagnostic());
-            assertEquals(
-                    "Expected diagnostic code '" + expectedCode + "' but was: " + ex.diagnostic().code(),
-                    expectedCode,
-                    ex.diagnostic().code()
-            );
+    private static void assertErrorForApplication(String source, DiagnosticCode expectedCode) throws Exception {
+        var result = CompilerTestHelper.parseAndBindApplication(source);
+        assertTrue("Expected type check to fail, but it succeeded. Diagnostics: " + formatDiagnosticList(result.diagnostics()) + "\nSource:\n " + source, result.isFailure());
+
+        var diagnostics = result.diagnostics();
+        Diagnostic foundDiagnostic = null;
+        for (Diagnostic diagnostic : diagnostics) {
+            if (diagnostic.code() == expectedCode) {
+                foundDiagnostic = diagnostic;
+                break;
+            }
         }
+
+        assertNotNull("Expected diagnostic with code '" + expectedCode + "' but found: " + formatDiagnosticList(diagnostics) + ".", foundDiagnostic);
     }
 
-    private static void assertErrorExec(String source, DiagnosticCode expectedCode) throws Exception {
-        try {
-            CompilerTestHelper.parseAndBind(source);
-            fail("Expected CompilerException with diagnostic code '" + expectedCode + "' but type check succeeded.");
-        } catch (CompilerException ex) {
-            assertNotNull("Expected a diagnostic on the CompilerException", ex.diagnostic());
-            assertEquals(
-                    "Expected diagnostic code '" + expectedCode + "' but was: " + ex.diagnostic().code(),
-                    expectedCode,
-                    ex.diagnostic().code()
-            );
+    private static String formatDiagnosticList(DiagnosticCollector diagnostics) {
+        StringBuilder sb = new StringBuilder();
+        for (Diagnostic diagnostic : diagnostics) {
+            sb.append(diagnostic.code()).append(": ").append(diagnostic.message()).append("\n");
         }
+        return sb.toString();
     }
 
     // =========================================================================
@@ -83,7 +83,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -109,8 +109,8 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(sourceA, DiagnosticCode.SEM_TYPE_MISMATCH);
-        assertErrorLib(sourceB, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorForLibrary(sourceA, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorForLibrary(sourceB, DiagnosticCode.SEM_TYPE_MISMATCH);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -137,7 +137,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -161,7 +161,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -173,7 +173,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_STRING_INDEX_ASSIGNMENT);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_STRING_INDEX_ASSIGNMENT);
     }
 
     @Test
@@ -184,7 +184,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_BINARY_OPERATOR);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNSUPPORTED_BINARY_OPERATOR);
     }
 
     @Test
@@ -196,7 +196,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
     @Test
@@ -208,7 +208,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
     }
 
     @Test
@@ -223,7 +223,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
     @Test
@@ -238,7 +238,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_ARGUMENT_COUNT_MISMATCH);
     }
 
     @Test
@@ -250,7 +250,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_VALUE_NOT_CALLABLE);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_VALUE_NOT_CALLABLE);
     }
 
     @Test
@@ -262,7 +262,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_MISSING_CONDITION);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_MISSING_CONDITION);
     }
 
     @Test
@@ -274,7 +274,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_MISSING_CONDITION);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_MISSING_CONDITION);
     }
 
     @Test
@@ -283,7 +283,7 @@ public class TestTypeChecker {
                 .withFunction("int", "f", b -> b.withReturn())
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_MISSING_RETURN_VALUE);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_MISSING_RETURN_VALUE);
     }
 
     @Test
@@ -292,7 +292,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("y", "x"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
@@ -304,7 +304,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
@@ -314,7 +314,7 @@ public class TestTypeChecker {
                 .withCollection("Point", f -> f.withField("int", "y"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
@@ -329,7 +329,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_ARGUMENT_TYPE_MISMATCH);
     }
 
     @Test
@@ -356,7 +356,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -374,7 +374,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -397,7 +397,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_STATIC_MEMBER_ACCESS_ON_INSTANCE);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_STATIC_MEMBER_ACCESS_ON_INSTANCE);
     }
 
     @Test
@@ -410,7 +410,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -423,7 +423,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -437,7 +437,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
@@ -453,7 +453,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("p", invoke("Point", "1", "2")))
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     // =========================================================================
@@ -466,7 +466,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.withAssignment("k", "2"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_IMMUTABLE_ASSIGNMENT);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_IMMUTABLE_ASSIGNMENT);
     }
 
     @Test
@@ -476,7 +476,7 @@ public class TestTypeChecker {
                 .declareConstVariable("p", invoke("Point", "1"), "Point")
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_MISSING_BASE_TYPE);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_CONSTANT_MISSING_BASE_TYPE);
     }
 
     @Test
@@ -486,7 +486,7 @@ public class TestTypeChecker {
                 .declareConstVariable("k", invoke("compute"), "int")
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER);
     }
 
     // =========================================================================
@@ -498,7 +498,7 @@ public class TestTypeChecker {
                 .withCollection("point", f -> f.withField("int", "x"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_LOWERCASE_COLLECTION_NAME);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_LOWERCASE_COLLECTION_NAME);
     }
 
     @Test
@@ -507,7 +507,7 @@ public class TestTypeChecker {
                 .withCollection("Pair", f -> f.withField("int", "x").withField("int", "x"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_FIELD_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_FIELD_REDECLARED);
     }
 
     @Test
@@ -519,7 +519,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_MEMBER_NOT_FOUND);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_MEMBER_NOT_FOUND);
     }
 
     // =========================================================================
@@ -533,7 +533,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNDECLARED_IDENTIFIER);
     }
 
     @Test
@@ -545,7 +545,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
     }
 
     @Test
@@ -558,7 +558,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_METHOD_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_METHOD_REDECLARED);
     }
 
     @Test
@@ -578,7 +578,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     // =========================================================================
@@ -590,7 +590,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("x", "-true"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_UNARY_OPERATOR);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNSUPPORTED_UNARY_OPERATOR);
     }
 
     @Test
@@ -602,7 +602,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_UNSUPPORTED_INDEX_OPERATOR);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_UNSUPPORTED_INDEX_OPERATOR);
     }
 
     // =========================================================================
@@ -614,7 +614,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.withReturn("42"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_RETURN_VALUE_IN_VOID_FUNCTION);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_RETURN_VALUE_IN_VOID_FUNCTION);
     }
 
     @Test
@@ -625,7 +625,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_INCOMPLETE_RETURN_PATHS);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_INCOMPLETE_RETURN_PATHS);
     }
 
     @Test
@@ -634,7 +634,7 @@ public class TestTypeChecker {
                 .withFunction("int", "f", b -> b.withReturn("\"not an int\""))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_TYPE_MISMATCH);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_TYPE_MISMATCH);
     }
 
     // =========================================================================
@@ -646,7 +646,7 @@ public class TestTypeChecker {
                 .withFunction("int", "square", p -> p.withParameter("v", "int"), b -> b.withReturn("v * v"))
                 .build();
 
-        assertErrorExec(source, DiagnosticCode.SEM_MISSING_MAIN_FUNCTION);
+        assertErrorForApplication(source, DiagnosticCode.SEM_MISSING_MAIN_FUNCTION);
     }
 
     // =========================================================================
@@ -661,7 +661,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -675,7 +675,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     // =========================================================================
@@ -697,7 +697,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -711,7 +711,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -724,7 +724,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -737,7 +737,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -751,7 +751,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertChecksLib(source);
+        assertChecksForLibrary(source);
     }
 
     @Test
@@ -760,7 +760,7 @@ public class TestTypeChecker {
                 .withFunction("int", "foo", p -> p.withParameter("x", "int").withParameter("x", "int"), b -> b.withReturn("x"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
@@ -772,7 +772,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
@@ -784,7 +784,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_SYMBOL_REDECLARED);
     }
 
     @Test
@@ -793,7 +793,7 @@ public class TestTypeChecker {
                 .withFunction("int", "foo", p -> p.withSelfParameter(), b -> b.withReturn("1"))
                 .build();
 
-        assertErrorLib(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
+        assertErrorForLibrary(source, DiagnosticCode.SEM_INVALID_RECEIVER_PARAMETER);
     }
 
     // =========================================================================
@@ -815,7 +815,7 @@ public class TestTypeChecker {
                 })
                 .build();
 
-        TestTypeChecker.assertChecksLib(sourceA, sourceB);
+        TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
 
     @Test
@@ -832,7 +832,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("s", invoke(qn("A", "add"), "3", "4")))
                 .build();
 
-        TestTypeChecker.assertChecksLib(sourceA, sourceB);
+        TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
 
     @Test
@@ -852,7 +852,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("p", invoke(qn("A", "Point"), "1", "2")))
                 .build();
 
-        TestTypeChecker.assertChecksLib(sourceA, sourceB);
+        TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
 
     @Test
@@ -866,7 +866,7 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("s", invoke(qn("A", "add"), "3", "4")))
                 .build();
 
-        TestTypeChecker.assertChecksLib(sourceA, sourceB);
+        TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
 
     @Test
@@ -886,6 +886,6 @@ public class TestTypeChecker {
                 .withVoidFunction("test", b -> b.declareLetVariable("p", invoke(qn("A", "Point"), "1", "2")))
                 .build();
 
-        TestTypeChecker.assertChecksLib(sourceA, sourceB);
+        TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
 }

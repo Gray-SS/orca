@@ -334,19 +334,16 @@ public class OrcaTextDocumentService implements TextDocumentService {
 
             var semanticModel = doc.semanticModel();
             var compilation = semanticModel.getCompilation();
-            var context = compilation.getContext();
-            try {
-                compilation.getBoundProgram();
-            } catch (CompilerException e) {
-                context.diagnostics().report(e.diagnostic());
-            }
+            var boundProgramResult = compilation.getBoundProgram();
 
-            for (var diagnostic : context.diagnostics()) {
-                if (!doc.isDiagnosticPartOfDocument(diagnostic)) {
-                    continue;
+            if (boundProgramResult.isFailure()) {
+                for (var diagnostic : boundProgramResult.diagnostics()) {
+                    if (!doc.isDiagnosticPartOfDocument(diagnostic)) {
+                        continue;
+                    }
+
+                    lspDiagnostics.add(LspUtils.toLspDiagnostic(diagnostic));
                 }
-
-                lspDiagnostics.add(LspUtils.toLspDiagnostic(diagnostic));
             }
         } catch (Exception e) {
             lspDiagnostics.add(LspUtils.toLspDiagnostic(DiagnosticBuilder.create()

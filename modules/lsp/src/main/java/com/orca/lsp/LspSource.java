@@ -40,9 +40,4 @@ public class LspSource extends TextSource {
                 span.loc().line(), span.loc().col(),
                 span.endLoc().line(), span.endLoc().col());
     }
-
-    @Override
-    public void validate() {
-        // No-op: content is provided in-memory by the editor.
-    }
 }

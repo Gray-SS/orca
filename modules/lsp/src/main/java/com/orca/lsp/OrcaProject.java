@@ -5,12 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orca.compiler.core.Compilation;
-import com.orca.compiler.core.CompilationContext;
-import com.orca.compiler.core.CompilerArguments;
-import com.orca.compiler.core.CompilerFlag;
+import com.orca.compiler.core.CompilerOptions;
+import com.orca.compiler.core.OutputKind;
+import com.orca.compiler.core.externals.ClassPath;
 
 /**
  * Active entity representing one Orca project (one build.gradle /
@@ -143,8 +144,9 @@ public class OrcaProject {
         }
 
         var lspSource = new LspSource(uri, doc.content());
-        var args = new CompilerArguments();
-        args.addSource(lspSource);
+
+        var optionsBuilder = CompilerOptions.builder();
+        optionsBuilder.addSource(lspSource);
 
         for (String sourcePath : sources) {
             String sourceUri = Path.of(sourcePath).toUri().toString();
@@ -154,40 +156,40 @@ public class OrcaProject {
 
             var openDoc = openDocuments.get(sourceUri);
             if (openDoc != null) {
-                args.addSource(new LspSource(sourceUri, openDoc.content()));
+                optionsBuilder.addSource(new LspSource(sourceUri, openDoc.content()));
             } else {
                 try {
-                    args.addSource(new LspSource(sourceUri, Files.readString(Path.of(sourcePath))));
+                    optionsBuilder.addSource(new LspSource(sourceUri, Files.readString(Path.of(sourcePath))));
                 } catch (IOException e) {
                     System.out.println("Could not read project source: " + sourcePath);
                 }
             }
         }
 
-        args.enableFlag(CompilerFlag.LIBRARY_MODE);
-        args.enableFlag(CompilerFlag.SILENT_MODE);
+        optionsBuilder.setOutputKind(OutputKind.LIBRARY);
 
-        for (String cp : classpath) {
-            try {
-                args.addClassPath(cp);
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-        for (String cp : manualClasspath) {
-            try {
-                args.addClassPath(cp);
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
+        var classpaths = new java.util.HashSet<String>();
+        classpaths.addAll(classpath);
+        classpaths.addAll(manualClasspath);
+
+        optionsBuilder.addClassPaths(getClassPaths(classpaths));
 
         System.out.println("Building compilation for " + uri
                 + " in project " + root
                 + " (sources: " + (sources.size() + 1) + ", classpath: " + classpath.size() + ")");
 
-        var context = new CompilationContext(args);
-        var compilation = new Compilation(context);
+        var options = optionsBuilder.build();
+        var compilation = new Compilation(options);
         doc.setSemanticModel(compilation.getSemanticModel(lspSource));
 
         return doc;
+    }
+
+    private static List<ClassPath> getClassPaths(Set<String> classpath) {
+        return classpath.stream()
+                .map(Path::of)
+                .filter(Files::exists)
+                .map(ClassPath::of)
+                .toList();
     }
 }

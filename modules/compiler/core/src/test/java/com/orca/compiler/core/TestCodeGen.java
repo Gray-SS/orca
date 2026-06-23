@@ -12,8 +12,17 @@ import com.orca.compiler.core.tests.TopLevelSourceBuilder.LocalContextSourceBuil
 public class TestCodeGen {
 
     private static void assertOutput(String source, String expected) throws Exception {
-        String actual = CompilerTestHelper.compileAndRun(source);
-        Assert.assertEquals(expected.trim(), actual.trim());
+        var result = CompilerTestHelper.compileAndRun(source);
+        switch (result) {
+            case CompilationResult.Success<String> success -> {
+                String actual = success.value();
+                Assert.assertEquals(expected.trim(), actual.trim());
+            }
+            case CompilationResult.Failure<String> failure -> {
+                var diagnostics = failure.diagnostics();
+                Assert.fail("Compilation failed with diagnostics: " + diagnostics);
+            }
+        }
     }
 
     private static void assertPrintln(String expression, String expected) throws Exception {
