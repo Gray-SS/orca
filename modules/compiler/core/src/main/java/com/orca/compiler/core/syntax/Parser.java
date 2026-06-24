@@ -791,7 +791,7 @@ public class Parser {
                         diagnostics.report(DiagnosticFactory.parserMissingSemicolon(actual.span()));
                     }
                 } else if (!actual.is(TokenKind.BadToken)) {
-                    diagnostics.reportUnexpectedToken(actual.span(), expected.toString(), actual.kind());
+                    diagnostics.report(DiagnosticFactory.parserUnexpectedToken(actual.span(), expected.toString(), actual.kind().name()));
                 }
 
                 return synthesized(expected, actual);
@@ -821,7 +821,7 @@ public class Parser {
 
     private SyntaxToken consumeUnexpectedToken(Token token, String expected) {
         if (!token.is(TokenKind.BadToken)) {
-            diagnostics.reportUnexpectedToken(token.span(), expected, token.kind());
+            diagnostics.report(DiagnosticFactory.parserUnexpectedToken(token.span(), expected, token.kind().name()));
         }
 
         // Never try to advance past EOF — it would not move the lookahead anyway.
