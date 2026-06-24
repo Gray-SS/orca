@@ -102,8 +102,8 @@ public abstract class Binder {
         return parent.getSemanticModel();
     }
 
-    protected DiagnosticCollector getDiagnostics() {
-        return parent.getDiagnostics();
+    protected DiagnosticCollector getDiagnosticCollector() {
+        return parent.getDiagnosticCollector();
     }
 
     protected final BoundNode getBoundNodeFor(SyntaxNode syntax) throws CompilerException {

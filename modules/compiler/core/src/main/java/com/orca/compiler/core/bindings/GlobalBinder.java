@@ -19,6 +19,7 @@ public final class GlobalBinder extends NamespaceBinder {
 
     private final SemanticModel semanticModel;
 
+    private final DiagnosticCollector diagnosticCollector = new DiagnosticCollector();
     private final Map<String, Lazy<Symbol>> lazyImportedSymbols = new HashMap<>();
     private static final Map<String, List<IntrinsicSymbol>> intrinsicSymbols = new HashMap<>();
 
@@ -54,8 +55,8 @@ public final class GlobalBinder extends NamespaceBinder {
     }
 
     @Override
-    protected DiagnosticCollector getDiagnostics() {
-        return semanticModel.getDiagnostics();
+    protected DiagnosticCollector getDiagnosticCollector() {
+        return diagnosticCollector;
     }
 
     @Override
