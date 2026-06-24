@@ -1,5 +1,6 @@
 package com.orca.compiler.core.syntax;
 
+import com.orca.compiler.core.diagnostics.DiagnosticBag;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.lexer.Lexer;
 import com.orca.compiler.core.text.TextSource;
@@ -9,9 +10,9 @@ public class SyntaxTree {
     private final TextSource source;
     private final SyntaxNode root;
 
-    private final DiagnosticCollector diagnostics;
+    private final DiagnosticBag diagnostics;
 
-    public SyntaxTree(DiagnosticCollector diagnostics, SyntaxNode root) {
+    public SyntaxTree(DiagnosticBag diagnostics, SyntaxNode root) {
         this.root = root;
         this.source = root.source();
         this.diagnostics = diagnostics;
@@ -40,11 +41,11 @@ public class SyntaxTree {
     public static SyntaxTree parse(TextSource source) {
         var diagnostics = new DiagnosticCollector();
         Parser parser = new Parser(new Lexer(source, diagnostics), diagnostics);
-        return new SyntaxTree(diagnostics, parser.parseCompilationUnit());
+        return new SyntaxTree(diagnostics.freeze(), parser.parseCompilationUnit());
     }
 
-    public DiagnosticCollector getDiagnostics() {
-        return DiagnosticCollector.copyOf(diagnostics);
+    public DiagnosticBag getDiagnostics() {
+        return diagnostics;
     }
 
     public TextSource source() {

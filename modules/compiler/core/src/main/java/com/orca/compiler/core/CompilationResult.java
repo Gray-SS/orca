@@ -1,7 +1,7 @@
 package com.orca.compiler.core;
 
 import com.google.common.base.Preconditions;
-import com.orca.compiler.core.diagnostics.DiagnosticCollector;
+import com.orca.compiler.core.diagnostics.DiagnosticBag;
 
 /**
  * A sealed interface representing the result of a compilation, which can be
@@ -16,13 +16,13 @@ public sealed interface CompilationResult<T> {
      * and the result of the compilation.
      *
      * @param <T> the type of the value produced by the compilation
-     * @param diagnostics the diagnostic collector containing any diagnostics
-     * produced during compilation
+     * @param diagnostics the diagnostic bag containing any diagnostics produced
+     * during compilation
      * @param value the result of the compilation
      * @return a {@link CompilationResult} representing a successful compilation
      * with the given diagnostics and result
      */
-    public static record Success<T>(DiagnosticCollector diagnostics, T value) implements CompilationResult<T> {
+    public static record Success<T>(DiagnosticBag diagnostics, T value) implements CompilationResult<T> {
 
     }
 
@@ -31,23 +31,23 @@ public sealed interface CompilationResult<T> {
      * produced during compilation.
      *
      * @param <T> the type of the result
-     * @param diagnostics the diagnostic collector containing any diagnostics
-     * produced during compilation
+     * @param diagnostics the diagnostic bag containing any diagnostics produced
+     * during compilation
      * @return a {@link CompilationResult} representing a failed compilation
      * with the given diagnostics
      */
-    public static record Failure<T>(DiagnosticCollector diagnostics) implements CompilationResult<T> {
+    public static record Failure<T>(DiagnosticBag diagnostics) implements CompilationResult<T> {
 
     }
 
     /**
-     * Returns the diagnostic collector containing any diagnostics produced
-     * during compilation.
+     * Returns the diagnostic bag containing any diagnostics produced during
+     * compilation.
      *
-     * @return the {@link DiagnosticCollector} containing any diagnostics
-     * produced during compilation.
+     * @return the {@link DiagnosticBag} containing any diagnostics produced
+     * during compilation.
      */
-    DiagnosticCollector diagnostics();
+    DiagnosticBag diagnostics();
 
     /**
      * Returns true if the compilation was successful and a result is available.
@@ -78,28 +78,28 @@ public sealed interface CompilationResult<T> {
      * @return a {@link CompilationResult} representing a successful compilation
      * with the given diagnostics and result
      */
-    public static <T> CompilationResult<T> success(DiagnosticCollector diagnostics, T result) {
+    public static <T> CompilationResult<T> success(DiagnosticBag diagnostics, T result) {
         Preconditions.checkNotNull(result, "Result cannot be null for a successful compilation.");
         Preconditions.checkNotNull(diagnostics, "Diagnostics cannot be null for a successful compilation.");
-        Preconditions.checkState(!diagnostics.hasErrors(), "Diagnostics cannot contain errors for a successful compilation.");
+        Preconditions.checkState(!diagnostics.anyError(), "Diagnostics cannot contain errors for a successful compilation.");
 
-        return new Success<>(DiagnosticCollector.copyOf(diagnostics), result);
+        return new Success<>(diagnostics, result);
     }
 
     /**
      * Returns a {@link CompilationResult} representing a successful compilation
      * with the given diagnostics and no result.
      *
-     * @param diagnostics the diagnostic collector containing any diagnostics
-     * produced during compilation
+     * @param diagnostics the diagnostic bag containing any diagnostics produced
+     * during compilation
      * @return a {@link CompilationResult} representing a successful compilation
      * with the given diagnostics and no result
      */
-    public static CompilationResult<Void> success(DiagnosticCollector diagnostics) {
+    public static CompilationResult<Void> success(DiagnosticBag diagnostics) {
         Preconditions.checkNotNull(diagnostics, "Diagnostics cannot be null for a successful compilation.");
-        Preconditions.checkState(!diagnostics.hasErrors(), "Diagnostics cannot contain errors for a successful compilation.");
+        Preconditions.checkState(!diagnostics.anyError(), "Diagnostics cannot contain errors for a successful compilation.");
 
-        return new Success<>(DiagnosticCollector.copyOf(diagnostics), null);
+        return new Success<>(diagnostics, null);
     }
 
     /**
@@ -107,14 +107,14 @@ public sealed interface CompilationResult<T> {
      * with the given diagnostics.
      *
      * @param <T> the type of the result
-     * @param diagnostics the diagnostic collector containing any diagnostics
-     * produced during compilation
+     * @param diagnostics the diagnostic bag containing any diagnostics produced
+     * during compilation
      * @return a {@link CompilationResult} representing a failed compilation
      * with the given diagnostics
      */
-    public static <T> CompilationResult<T> failure(DiagnosticCollector diagnostics) {
+    public static <T> CompilationResult<T> failure(DiagnosticBag diagnostics) {
         Preconditions.checkNotNull(diagnostics, "Diagnostics cannot be null for a failed compilation.");
 
-        return new Failure<>(DiagnosticCollector.copyOf(diagnostics));
+        return new Failure<>(diagnostics);
     }
 }
