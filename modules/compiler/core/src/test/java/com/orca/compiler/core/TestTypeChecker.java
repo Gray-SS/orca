@@ -5,8 +5,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import com.orca.compiler.core.diagnostics.Diagnostic;
+import com.orca.compiler.core.diagnostics.DiagnosticBag;
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
-import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.tests.CompilerTestHelper;
 import com.orca.compiler.core.tests.SourceBuilder;
 
@@ -61,7 +61,7 @@ public class TestTypeChecker {
         assertNotNull("Expected diagnostic with code '" + expectedCode + "' but found: " + formatDiagnosticList(diagnostics) + ".", foundDiagnostic);
     }
 
-    private static String formatDiagnosticList(DiagnosticCollector diagnostics) {
+    private static String formatDiagnosticList(DiagnosticBag diagnostics) {
         StringBuilder sb = new StringBuilder();
         for (Diagnostic diagnostic : diagnostics) {
             sb.append(diagnostic.code()).append(": ").append(diagnostic.message()).append("\n");

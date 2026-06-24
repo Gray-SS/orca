@@ -16,6 +16,7 @@ import com.orca.compiler.core.CompilerValidationException;
 import com.orca.compiler.core.OutputFormat;
 import com.orca.compiler.core.OutputKind;
 import com.orca.compiler.core.boundtree.BoundProgram;
+import com.orca.compiler.core.diagnostics.DiagnosticBag;
 import com.orca.compiler.core.diagnostics.DiagnosticCode;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.diagnostics.DiagnosticFactory;
@@ -158,11 +159,10 @@ public class CompilerTestHelper {
             return CompilationResult.success(result.diagnostics(), stdout.trim());
         } catch (IOException e) {
             e.printStackTrace();
-            result.diagnostics().report(DiagnosticFactory.inputIoError(e.getMessage()));
-            return CompilationResult.failure(result.diagnostics());
+            return CompilationResult.failure(DiagnosticBag.single(DiagnosticFactory.inputIoError("Failed to run compiled program: " + e.getMessage())));
         } catch (InterruptedException e) {
-            result.diagnostics().report(DiagnosticFactory.inputIoError("Process was interrupted: " + e.getMessage()));
-            return CompilationResult.failure(result.diagnostics());
+            e.printStackTrace();
+            return CompilationResult.failure(DiagnosticBag.single(DiagnosticFactory.inputIoError("Process was interrupted: " + e.getMessage())));
         } finally {
             deleteDirRecursive(tempDir);
         }
