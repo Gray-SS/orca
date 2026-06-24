@@ -17,6 +17,16 @@ public final class DiagnosticBag implements Iterable<Diagnostic> {
     }
 
     /**
+     * Creates a new {@link DiagnosticBag} containing a single diagnostic.
+     *
+     * @param diagnostic The diagnostic to include in the bag.
+     * @return A new {@link DiagnosticBag} containing the specified diagnostic.
+     */
+    public static DiagnosticBag single(Diagnostic diagnostic) {
+        return new DiagnosticBag(List.of(diagnostic));
+    }
+
+    /**
      * Checks if the diagnostic bag contains any diagnostics.
      *
      * @return true if there are diagnostics, false otherwise.
