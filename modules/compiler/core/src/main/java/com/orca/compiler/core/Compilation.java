@@ -23,6 +23,7 @@ import com.orca.compiler.core.diagnostics.DiagnosticCollector;
 import com.orca.compiler.core.diagnostics.DiagnosticFactory;
 import com.orca.compiler.core.externals.ExternalSymbolResolver;
 import com.orca.compiler.core.semantics.SemanticModel;
+import com.orca.compiler.core.semantics.SymbolDeclarator;
 import com.orca.compiler.core.symbols.NamespaceOrTypeSymbol;
 import com.orca.compiler.core.symbols.NamespaceSymbol;
 import com.orca.compiler.core.symbols.Symbol;
@@ -97,7 +98,7 @@ public final class Compilation {
     }
 
     private CompilationResult<BoundProgram> computeBoundProgram() {
-        var diagnostics = new DiagnosticCollector();
+        var diagnosticCollector = new DiagnosticCollector();
 
         try {
             ensureDeclarationsComplete();
@@ -105,7 +106,7 @@ public final class Compilation {
             var boundNamespace = new BoundNamespace(globalNamespace);
             for (SemanticModel semanticModel : semanticModels) {
                 var bindingResult = semanticModel.bindFullSemanticModel();
-                diagnostics = DiagnosticCollector.merge(diagnostics, bindingResult.diagnostics());
+                diagnosticCollector.mergeFrom(bindingResult.diagnostics());
 
                 if (bindingResult instanceof CompilationResult.Success<BoundNamespace> success) {
                     var boundNamespaceFromModel = success.value();
@@ -131,14 +132,15 @@ public final class Compilation {
             }
 
             var boundProgram = new BoundProgram(boundNamespace);
-            if (diagnostics.hasErrors()) {
+            var diagnostics = diagnosticCollector.freeze();
+            if (diagnostics.anyError()) {
                 return CompilationResult.failure(diagnostics);
             }
 
             return CompilationResult.success(diagnostics, boundProgram);
         } catch (CompilerException e) {
-            diagnostics.report(e.diagnostic());
-            return CompilationResult.failure(diagnostics);
+            diagnosticCollector.report(e.diagnostic());
+            return CompilationResult.failure(diagnosticCollector.freeze());
         }
     }
 
@@ -158,7 +160,9 @@ public final class Compilation {
             }
             case CompilationResult.Success<BoundProgram> success -> {
                 var boundProgram = success.value();
-                var compilationDiagnostics = DiagnosticCollector.copyOf(boundProgramResult.diagnostics());
+
+                var compilationDiagnostics = new DiagnosticCollector();
+                compilationDiagnostics.mergeFrom(success.diagnostics());
 
                 switch (options.getOutputFormat()) {
                     case JAR -> {
@@ -166,7 +170,7 @@ public final class Compilation {
                             emitJar(boundProgram, options.getOutputPath());
                         } catch (IOException e) {
                             compilationDiagnostics.report(DiagnosticFactory.inputIoError(e.getMessage()));
-                            return CompilationResult.failure(compilationDiagnostics);
+                            return CompilationResult.failure(compilationDiagnostics.freeze());
                         }
                     }
                     case CLASS_DIRECTORY -> {
@@ -174,7 +178,7 @@ public final class Compilation {
                     }
                 }
 
-                return CompilationResult.success(compilationDiagnostics);
+                return CompilationResult.success(compilationDiagnostics.freeze());
             }
         }
     }
@@ -406,12 +410,9 @@ public final class Compilation {
         if (declarationsComplete) {
             return;
         }
-
         declarationsComplete = true;
-
-        semanticModels.forEach(SemanticModel::resolveImports); // 1. Register lazy imports
-        semanticModels.forEach(SemanticModel::declareTypes); // 2. Declare all types
-        semanticModels.forEach(SemanticModel::declareMethods); // 3. Declare methods
-        semanticModels.forEach(SemanticModel::declareRemainingSymbols); // 4. Declare remaining symbols
+        for (var phase : SymbolDeclarator.Phase.values()) {
+            semanticModels.forEach(model -> model.runDeclarationPhase(phase));
+        }
     }
 }
