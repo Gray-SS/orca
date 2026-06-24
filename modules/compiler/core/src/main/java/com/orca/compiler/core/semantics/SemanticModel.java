@@ -2,6 +2,7 @@ package com.orca.compiler.core.semantics;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 import com.orca.compiler.core.Compilation;
@@ -110,7 +111,12 @@ public final class SemanticModel {
         throw new IllegalStateException("Root syntax node of the syntax tree should always be a CompilationUnitSyntax");
     }
 
-    public Symbol getDeclaredSymbol(SyntaxNode syntax) {
+    public Optional<Symbol> getDeclaredSymbol(SyntaxNode syntax) {
+        Preconditions.checkArgument(syntax != null, "Syntax node cannot be null");
+        return Optional.ofNullable(symbolCache.get(syntax));
+    }
+
+    public Symbol getDeclaredSymbolRequired(SyntaxNode syntax) {
         Preconditions.checkArgument(syntax != null, "Syntax node cannot be null");
 
         var symbol = symbolCache.get(syntax);

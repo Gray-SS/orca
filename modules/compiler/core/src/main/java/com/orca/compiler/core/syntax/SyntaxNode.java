@@ -184,6 +184,46 @@ public abstract class SyntaxNode implements IHaveSpan {
     }
 
     /**
+     * Get the first ancestor node of this syntax node that is an instance of
+     * the specified type.
+     *
+     * @param <T> The type of the ancestor node to get.
+     * @param type The class of the ancestor node type to get.
+     * @return An Optional containing the first ancestor node of the specified
+     * type, or an empty Optional if no such ancestor exists.
+     */
+    @Nullable
+    public <T> T getFirstAncestorOfType(Class<T> type) {
+        SyntaxNode current = this.parent;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return type.cast(current);
+            }
+            current = current.parent;
+        }
+        return null;
+    }
+
+    /**
+     * Get the first child node of this syntax node that is an instance of the
+     * specified type.
+     *
+     * @param <T> The type of the child node to get.
+     * @param type The class of the child node type to get.
+     * @return The first child node of the specified type, or null if no such
+     * child exists.
+     */
+    @Nullable
+    public <T> T getFirstChildOfType(Class<T> type) {
+        for (SyntaxNode child : children()) {
+            if (type.isInstance(child)) {
+                return type.cast(child);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get all descendant nodes of this syntax node.
      *
      * @return A list of all descendant nodes.

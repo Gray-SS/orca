@@ -24,6 +24,17 @@ public class SyntaxList<T extends SyntaxNode> extends SyntaxNode implements Iter
     }
 
     /**
+     * Determines whether this syntax list contains the specified element.
+     *
+     * @param element The element to check for containment.
+     * @return True if the element is contained in this syntax list; otherwise,
+     * false.
+     */
+    public boolean contains(T element) {
+        return elements.contains(element);
+    }
+
+    /**
      * Gets the number of elements in this syntax list.
      *
      * @return The number of elements in this syntax list.

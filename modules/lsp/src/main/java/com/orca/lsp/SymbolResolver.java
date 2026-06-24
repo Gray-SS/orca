@@ -5,16 +5,21 @@ import com.orca.compiler.core.boundtree.expressions.BoundMethodCallExpr;
 import com.orca.compiler.core.boundtree.expressions.BoundReferenceExpr;
 import com.orca.compiler.core.semantics.SemanticModel;
 import com.orca.compiler.core.semantics.SymbolInfo;
+import com.orca.compiler.core.symbols.Symbol;
+import com.orca.compiler.core.symbols.TypeSymbol;
 import com.orca.compiler.core.syntax.SyntaxNode;
 import com.orca.compiler.core.syntax.SyntaxToken;
+import com.orca.compiler.core.syntax.declarations.FieldDeclarationSyntax;
 import com.orca.compiler.core.syntax.expressions.InvocationExpr;
 import com.orca.compiler.core.syntax.expressions.MemberAccessExpr;
+import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.nodes.IdentifierSyntax;
 import com.orca.compiler.core.syntax.nodes.QualifiedIdentifierSyntax;
 
 public final class SymbolResolver {
 
     private static final Resolver[] RESOLVERS = new Resolver[]{
+        SymbolResolver::tryGetFieldSymbolInfo,
         SymbolResolver::tryGetInvocationExprSymbolInfo,
         SymbolResolver::tryGetMemberAccessExprSymbolInfo,
         SymbolResolver::tryGetExactIdentifierSymbolInfo
@@ -46,6 +51,42 @@ public final class SymbolResolver {
 
         System.err.println("[SymbolResolver] failed to resolve symbol for syntax: " + syntax.getClass().getSimpleName() + " at " + syntax.span().loc());
         return null;
+    }
+
+    private static SymbolInfo tryGetFieldSymbolInfo(SemanticModel semanticModel, SyntaxNode syntax) {
+        var rootSyntax = getRootSyntax(syntax);
+        if (!(rootSyntax instanceof FieldDeclarationSyntax fieldDeclarationSyntax)) {
+            return null;
+        }
+
+        System.out.println("[SymbolResolver] trying to resolve symbol for FieldDeclarationSyntax at " + fieldDeclarationSyntax.span().loc());
+
+        var collectionDeclarationSyntax = fieldDeclarationSyntax.getFirstAncestorOfType(CollectionDeclarationSyntax.class);
+        if (collectionDeclarationSyntax == null) {
+            System.err.println("[SymbolResolver] FieldDeclarationSyntax is not part of any CollectionDeclarationSyntax at " + fieldDeclarationSyntax.span().loc());
+            return null;
+        }
+
+        var declaredCollectionOpt = semanticModel.getDeclaredSymbol(collectionDeclarationSyntax);
+        if (!declaredCollectionOpt.isPresent()) {
+            System.err.println("[SymbolResolver] CollectionDeclarationSyntax does not have a declared symbol at " + collectionDeclarationSyntax.span().loc());
+            return null;
+        }
+
+        if (!(declaredCollectionOpt.get() instanceof TypeSymbol typeSymbol)) {
+            System.err.println("[SymbolResolver] Declared symbol for CollectionDeclarationSyntax is not a TypeSymbol at " + collectionDeclarationSyntax.span().loc());
+            return null;
+        }
+
+        String fieldName = fieldDeclarationSyntax.identifier().text();
+        var fieldSymbol = typeSymbol.getField(fieldName);
+
+        if (fieldSymbol == null || fieldSymbol.isMissing()) {
+            System.err.println("[SymbolResolver] Field '" + fieldName + "' not found in TypeSymbol '" + typeSymbol.displayName() + "' at " + fieldDeclarationSyntax.span().loc());
+            return new SymbolInfo(Symbol.missing(fieldName), fieldDeclarationSyntax.identifier());
+        }
+
+        return new SymbolInfo(fieldSymbol, fieldDeclarationSyntax.identifier());
     }
 
     private static SymbolInfo tryGetInvocationExprSymbolInfo(SemanticModel semanticModel, SyntaxNode syntax) {
@@ -123,6 +164,8 @@ public final class SymbolResolver {
                 getRootSyntax(memberAccess);
             case InvocationExpr invocation when invocation.callee() == syntax ->
                 getRootSyntax(invocation);
+            case FieldDeclarationSyntax fieldDeclaration when fieldDeclaration.identifier() == syntax ->
+                getRootSyntax(fieldDeclaration);
             default ->
                 syntax;
         };
