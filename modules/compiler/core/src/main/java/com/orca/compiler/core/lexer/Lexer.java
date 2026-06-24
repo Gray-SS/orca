@@ -5,6 +5,7 @@ import java.io.Reader;
 
 import com.orca.compiler.core.Debug;
 import com.orca.compiler.core.diagnostics.DiagnosticCollector;
+import com.orca.compiler.core.diagnostics.DiagnosticFactory;
 import com.orca.compiler.core.syntax.SyntaxFacts;
 import com.orca.compiler.core.text.SourceSpan;
 import com.orca.compiler.core.text.TextSource;
@@ -243,7 +244,7 @@ public class Lexer implements AutoCloseable {
                     advance();
                     return createSymbol(TokenKind.DoubleAmpersand, "&&");
                 } else {
-                    _diagnostics.reportUnexpectedCharacterAfter(currentTokenSpan(), '&', (char) _nextCharacter);
+                    _diagnostics.report(DiagnosticFactory.lexUnexpectedCharacter(currentTokenSpan(), '&'));
                     return badToken();
                 }
             }
@@ -254,7 +255,7 @@ public class Lexer implements AutoCloseable {
                     advance();
                     return createSymbol(TokenKind.DoublePipe, "||");
                 } else {
-                    _diagnostics.reportUnexpectedCharacterAfter(currentTokenSpan(), '|', (char) _nextCharacter);
+                    _diagnostics.report(DiagnosticFactory.lexUnexpectedCharacter(currentTokenSpan(), '|'));
                     return badToken();
                 }
             }
@@ -277,7 +278,7 @@ public class Lexer implements AutoCloseable {
             }
         }
 
-        _diagnostics.reportUnexpectedCharacter(currentTokenSpan(), (char) _nextCharacter);
+        _diagnostics.report(DiagnosticFactory.lexUnexpectedCharacter(currentTokenSpan(), (char) _nextCharacter));
         return badToken();
     }
 
@@ -375,7 +376,7 @@ public class Lexer implements AutoCloseable {
                 rawLexeme.append('\\');
                 advance();
                 if (isAtEndOfFile() || _nextCharacter == '\n') {
-                    _diagnostics.reportUnterminatedStringLiteral(currentTokenSpan());
+                    _diagnostics.report(DiagnosticFactory.lexUnterminatedString(currentTokenSpan()));
                     return badToken();
                 }
 
@@ -388,7 +389,7 @@ public class Lexer implements AutoCloseable {
                     case '\\' ->
                         decodedValue.append('\\');
                     default -> {
-                        _diagnostics.reportInvalidEscapeSequence(currentTokenSpan(), "\\" + (char) _nextCharacter);
+                        _diagnostics.report(DiagnosticFactory.lexInvalidEscapeSequence(currentTokenSpan(), "\\" + (char) _nextCharacter));
                         return badToken();
                     }
                 }
@@ -401,7 +402,7 @@ public class Lexer implements AutoCloseable {
         }
 
         if (isAtEndOfFile() || _nextCharacter == '\n') {
-            _diagnostics.reportUnterminatedStringLiteral(currentTokenSpan());
+            _diagnostics.report(DiagnosticFactory.lexUnterminatedString(currentTokenSpan()));
             return badToken();
         }
 
@@ -432,7 +433,7 @@ public class Lexer implements AutoCloseable {
             // This allows member access like: 10.timesTwo()
             if (_nextCharacter == '.' && Character.isDigit(peekChar(1))) {
                 if (hasDot) {
-                    _diagnostics.reportInvalidFloatLiteral(currentTokenSpan(), lexeme.toString());
+                    _diagnostics.report(DiagnosticFactory.lexMalformedNumberLiteral(currentTokenSpan(), lexeme.toString()));
                     return badToken();
                 }
                 hasDot = true;
