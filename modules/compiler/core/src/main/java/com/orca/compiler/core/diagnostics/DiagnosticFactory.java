@@ -732,7 +732,7 @@ public final class DiagnosticFactory {
     /**
      * A constant declaration has no initializer expression.
      */
-    public static Diagnostic missingVariableInitializer(IHaveSpan span, String name, String modifier) {
+    public static Diagnostic immutableVariableMissingInitializer(IHaveSpan span, String name, String modifier) {
         return simpleWithCodeSnippet(DiagnosticCode.SEM_CONSTANT_MISSING_INITIALIZER, span,
                 capitalize(modifier) + " '" + name + "' requires an initializer");
     }

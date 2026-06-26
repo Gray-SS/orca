@@ -196,8 +196,8 @@ public final class SemanticErrors {
         return wrap(DiagnosticFactory.missingPackageDirective(source));
     }
 
-    public static CompilerException missingVariableInitializer(IHaveSpan span, String variableName, String modifier) {
-        return wrap(DiagnosticFactory.missingVariableInitializer(span, variableName, modifier));
+    public static CompilerException immutableVariableMissingInitializer(IHaveSpan span, String variableName, String modifier) {
+        return wrap(DiagnosticFactory.immutableVariableMissingInitializer(span, variableName, modifier));
     }
 
     public static CompilerException immutableAssignment(IHaveSpan span, ValueSymbol symbol) {
