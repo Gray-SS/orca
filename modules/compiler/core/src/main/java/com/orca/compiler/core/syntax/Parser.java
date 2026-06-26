@@ -317,13 +317,6 @@ public class Parser {
     private MethodDeclarationSyntax parseFunctionDecl() {
         matchToken(TokenKind.DefKeyword);
 
-        TypeSyntax returnType = null;
-
-        boolean skipReturnType = tokenIs(TokenKind.Identifier) && tokenAtIs(1, TokenKind.LParen);
-        if (!skipReturnType) {
-            returnType = parseType();
-        }
-
         SimpleIdentifierSyntax functionName = parseSimpleIdentifier();
 
         matchToken(TokenKind.LParen);
@@ -339,6 +332,12 @@ public class Parser {
         }
 
         SyntaxToken rParen = matchToken(TokenKind.RParen);
+
+        TypeSyntax returnType = null;
+        if (tokenIs(TokenKind.Colon)) {
+            matchToken(TokenKind.Colon);
+            returnType = parseType();
+        }
 
         int endPos = rParen.span().start();
         SourceSpan parametersSpan = SourceSpan.fromBounds(lexer.source(), startPos, endPos);

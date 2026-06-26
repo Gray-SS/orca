@@ -52,9 +52,10 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     public TopLevelSourceBuilder withFunction(String returnType, String name,
             Consumer<ParameterContextSourceBuilder> paramsBuilder,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
-        final String format = "def %s %s(%s) {\n%s\n}\n";
-        appendFormat(format, returnType, name,
+        final String format = "def %s(%s): %s {\n%s\n}\n";
+        appendFormat(format, name,
                 acceptAndBuild(new ParameterContextSourceBuilder(), paramsBuilder),
+                returnType,
                 acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
         return this;
     }
@@ -116,9 +117,10 @@ public class TopLevelSourceBuilder extends SourceBuilder {
         public ImplBodyBuilder withMethod(String returnType, String name,
                 Consumer<ParameterContextSourceBuilder> paramsBuilder,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
-            final String format = "def %s %s(%s) {\n%s\n}\n";
-            appendFormat(format, returnType, name,
+            final String format = "def %s(%s): %s {\n%s\n}\n";
+            appendFormat(format, name,
                     acceptAndBuild(new ParameterContextSourceBuilder(), paramsBuilder),
+                    returnType,
                     acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
