@@ -15,12 +15,12 @@ public final class VariableDeclaratorSyntax extends SyntaxNode {
      * initializer (e.g. {@code var x: int;}).
      */
     private final ExpressionSyntax initializer;
-    private final SyntaxToken modifierToken;
+    private final SyntaxToken mutToken;
     private final SimpleIdentifierSyntax identifier;
     private final TypeSyntax type;
 
-    public VariableDeclaratorSyntax(SyntaxToken modifierToken, SimpleIdentifierSyntax identifier, TypeSyntax type, ExpressionSyntax initializer) {
-        this.modifierToken = modifierToken;
+    public VariableDeclaratorSyntax(SyntaxToken mutToken, SimpleIdentifierSyntax identifier, TypeSyntax type, ExpressionSyntax initializer) {
+        this.mutToken = mutToken;
         this.identifier = identifier;
         this.type = type;
         this.initializer = initializer;
@@ -37,12 +37,13 @@ public final class VariableDeclaratorSyntax extends SyntaxNode {
     }
 
     /**
-     * Gets the modifier token for the variable declaration.
+     * Determines whether the variable is mutable (i.e., declared with the "mut"
+     * keyword).
      *
-     * @return The modifier token.
+     * @return True if the variable is mutable; false otherwise.
      */
-    public SyntaxToken modifierToken() {
-        return modifierToken;
+    public boolean isMutable() {
+        return mutToken != null;
     }
 
     /**
