@@ -58,7 +58,7 @@ public final class ForBinder extends LocalBinder {
     }
 
     public BoundForStmt bind(ForStmt stmt) throws CompilerException {
-        var loopVariableDeclarator = bindVariableDeclarator(stmt.variableDeclarator(), true);
+        var loopVariableDeclarator = bindVariableDeclarator(stmt.variableDeclarator(), true, null);
         if (!(loopVariableDeclarator.variable() instanceof SourceVariableSymbol variable)) {
             throw SemanticErrors.unexpectedError(stmt.variableDeclarator(), "Expected a SourceVariableSymbol for a loop variable declarator");
         }
