@@ -16,11 +16,13 @@ public final class VariableDeclaratorSyntax extends SyntaxNode {
      */
     private final ExpressionSyntax initializer;
     private final SyntaxToken mutToken;
+    private final SyntaxToken modifierToken;
     private final SimpleIdentifierSyntax identifier;
     private final TypeSyntax type;
 
-    public VariableDeclaratorSyntax(SyntaxToken mutToken, SimpleIdentifierSyntax identifier, TypeSyntax type, ExpressionSyntax initializer) {
+    public VariableDeclaratorSyntax(SyntaxToken mutToken, SyntaxToken modifierToken, SimpleIdentifierSyntax identifier, TypeSyntax type, ExpressionSyntax initializer) {
         this.mutToken = mutToken;
+        this.modifierToken = modifierToken;
         this.identifier = identifier;
         this.type = type;
         this.initializer = initializer;
@@ -34,6 +36,16 @@ public final class VariableDeclaratorSyntax extends SyntaxNode {
      */
     public SimpleIdentifierSyntax identifier() {
         return identifier;
+    }
+
+    /**
+     * Gets the modifier token for the variable declaration, which can be "let"
+     * or "const".
+     *
+     * @return The modifier token, or null if there is no modifier.
+     */
+    public SyntaxToken modifierToken() {
+        return modifierToken;
     }
 
     /**
