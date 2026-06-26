@@ -110,7 +110,7 @@ Where a variable is declared determines how it is accessed and what the compiler
 **Local variables** are declared inside a function or method body. They are scoped to the enclosing block and are not accessible from outside.
 
 ```orca
-def int add(int a, int b) {
+def add(a: int, b: int): int {
     let result := a + b;   # local — only visible inside add
     return result;
 }
@@ -158,8 +158,8 @@ A `coll` defines a data type — similar to a record or struct. Its body declare
 
 ```orca
 coll Point {
-    float x;
-    float y;
+    x: float;
+    y: float;
 }
 ```
 
@@ -169,11 +169,11 @@ An `impl` block adds constants, static variables, and methods:
 impl Point {
     const Origin := Point(0.0, 0.0);
 
-    def Point new(float x, float y) {
+    def new(x: float, y: float): Point {
         return Point(x, y);
     }
 
-    def float distanceTo(self, Point other) {
+    def distanceTo(self, other: Point): float {
         let dx := self.x - other.x;
         let dy := self.y - other.y;
         return Math::sqrt(dx * dx + dy * dy);
@@ -192,8 +192,8 @@ let p := Point(1.0, 2.0);
 Collections use **structural typing**: two collections with the same field names and types are mutually assignable, regardless of their names.
 
 ```orca
-coll Point2D { float x; float y; }
-coll Vector2D { float x; float y; }
+coll Point2D { x: float; y: float; }
+coll Vector2D { x: float; y: float; }
 
 let p := Point2D(1.0, 2.0);
 let v: Vector2D = p;  # valid — same shape
@@ -205,13 +205,13 @@ This means compatibility is determined by structure, not by declaration name.
 
 ## Functions and Methods
 
-Functions are declared with `def`. The return type, if any, is placed between `def` and the function name. A function with no explicit return type returns nothing.
+Functions are declared with `def`. The return type, if any, follows the parameter list after `:`. A function with no explicit return type returns nothing.
 
 ```orca
-def main() { ... }                     # no return value
-def int add(int a, int b) { ... }      # returns int
-def bool isEven(int n) { ... }         # returns bool
-def string greet(string name) { ... }  # returns string
+def main() { ... }                        # no return value
+def add(a: int, b: int): int { ... }      # returns int
+def isEven(n: int): bool { ... }          # returns bool
+def greet(name: string): string { ... }   # returns string
 ```
 
 ### Instance Methods
@@ -219,7 +219,7 @@ def string greet(string name) { ... }  # returns string
 Instance methods receive the collection instance as an explicit `self` parameter:
 
 ```orca
-def string display(self) {
+def display(self): string {
     return "(" + str(self.x) + ", " + str(self.y) + ")";
 }
 ```
@@ -229,7 +229,7 @@ def string display(self) {
 Methods inside `impl` without `self` act as static functions scoped to the collection:
 
 ```orca
-def Point fromAngle(float angle, float radius) {
+def fromAngle(angle: float, radius: float): Point {
     return Point(Math::cos(angle) * radius, Math::sin(angle) * radius);
 }
 ```
@@ -241,7 +241,7 @@ Called as `Point::fromAngle(angle, radius)`.
 Functions can also be declared at the module level, outside any `coll` or `impl`:
 
 ```orca
-def int clamp(int value, int min, int max) {
+def clamp(value: int, min: int, max: int): int {
     if (value < min) { return min; }
     if (value > max) { return max; }
     return value;
@@ -382,18 +382,18 @@ for (var i := 1; i <= 100; i++) {
 }
 
 # absolute value
-def float abs(float x) {
+def abs(x: float): float {
     if (x < 0.0) { return -x; }
     return x;
 }
 
 # test if a number is outside a range
-def bool outOfRange(int value, int lo, int hi) {
+def outOfRange(value: int, lo: int, hi: int): bool {
     return !(value >= lo && value <= hi);
 }
 
 # clamp with compound assignment
-def int clamp(int v, int lo, int hi) {
+def clamp(v: int, lo: int, hi: int): int {
     var result := v;
     if (result < lo) { result = lo; }
     if (result > hi) { result = hi; }
@@ -532,22 +532,22 @@ package geometry;
 import java::lang::Math;
 
 coll Point {
-    float x;
-    float y;
+    x: float;
+    y: float;
 }
 
 impl Point {
-    def Point new(float x, float y) {
+    def new(x: float, y: float): Point {
         return Point(x, y);
     }
 
-    def float distanceTo(self, Point other) {
+    def distanceTo(self, other: Point): float {
         let dx := self.x - other.x;
         let dy := self.y - other.y;
         return Math::sqrt(dx * dx + dy * dy);
     }
 
-    def string display(self) {
+    def display(self): string {
         return "(" + str(self.x) + ", " + str(self.y) + ")";
     }
 }
