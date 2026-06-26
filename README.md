@@ -4,7 +4,76 @@ Orca is a statically-typed, JVM-targeting programming language with a clean synt
 
 ---
 
-## Hello, World!
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [Language Reference](#language-reference)
+  - [Hello, World!](#hello-world)
+  - [Packages and Imports](#packages-and-imports)
+  - [Primitive Types](#primitive-types)
+  - [Type System](#type-system)
+    - [Implicit widening conversions](#implicit-widening-conversions)
+    - [No narrowing conversions](#no-narrowing-conversions)
+  - [Variables](#variables)
+    - [Declaration contexts](#declaration-contexts)
+    - [Constants](#constants)
+  - [Collections](#collections)
+    - [Structural Typing](#structural-typing)
+  - [Functions and Methods](#functions-and-methods)
+    - [Instance Methods](#instance-methods)
+    - [Static Methods](#static-methods)
+    - [Free Functions](#free-functions)
+  - [Static vs Instance Access](#static-vs-instance-access)
+  - [Arrays](#arrays)
+  - [Control Flow](#control-flow)
+  - [Operators](#operators)
+  - [Built-ins](#built-ins)
+  - [Strings](#strings)
+  - [Java Interop](#java-interop)
+  - [Native Library Interop](#native-library-interop)
+  - [Full Example](#full-example)
+
+---
+
+## Getting Started
+
+**Prerequisites:** Java 21 or later.
+
+```bash
+# Clone the repository
+git clone https://github.com/Gray-SS/orca.git
+cd orca
+
+# Build all modules
+./gradlew build
+
+# Run all tests
+./gradlew test
+
+# Run the compiler CLI; This will print the help message
+./gradlew :modules:cli:run --args="--help"
+
+```
+
+---
+
+## Contributing
+
+1. Fork the repository and clone it locally
+2. Create a branch for your work: `git checkout -b my-fix`
+3. Build the project: `./gradlew build`
+4. Run the tests to make sure everything passes: `./gradlew test`
+5. Make your changes, then run the tests again
+6. Open a pull request — a draft PR is welcome if you want early feedback
+
+If you have questions at any point, feel free to comment on the issue.
+
+---
+
+## Language Reference
+
+### Hello, World!
 
 ```orca
 def main() {
@@ -16,7 +85,7 @@ def main() {
 
 ---
 
-## Packages and Imports
+### Packages and Imports
 
 Files are organized into packages using `::` as the path separator. A file declares its package at the top, and other files are imported by their fully qualified path.
 
@@ -31,7 +100,7 @@ Java standard library types and third-party JVM libraries are imported the same 
 
 ---
 
-## Primitive Types
+### Primitive Types
 
 | Type     | Description           |
 | -------- | --------------------- |
@@ -46,9 +115,9 @@ Java standard library types and third-party JVM libraries are imported the same 
 
 ---
 
-## Type System
+### Type System
 
-### Implicit widening conversions
+#### Implicit widening conversions
 
 Numeric types widen implicitly along this chain when the target type is wider:
 
@@ -66,7 +135,7 @@ let y: double = x;     # float widened to double
 let c: int = 'A';      # char widened to int (gives 65)
 ```
 
-### No narrowing conversions
+#### No narrowing conversions
 
 Orca has no cast operator. Narrowing a type (e.g. `double` to `int`) is not possible in source code. Use a built-in like `floor` or `ceil` when you need to convert a floating-point value to an integer.
 
@@ -77,7 +146,7 @@ let m := ceil(1.1);    # 2  — float → int via built-in
 
 ---
 
-## Variables
+### Variables
 
 Variables are declared with `let` (immutable) or `var` (mutable). The `:=` operator declares and initializes; plain `=` reassigns.
 
@@ -103,14 +172,14 @@ count /= 4;
 count %= 3;
 ```
 
-### Declaration contexts
+#### Declaration contexts
 
 Where a variable is declared determines how it is accessed and what the compiler allows.
 
 **Local variables** are declared inside a function or method body. They are scoped to the enclosing block and are not accessible from outside.
 
 ```orca
-def int add(int a, int b) {
+def add(a: int, b: int): int {
     let result := a + b;   # local — only visible inside add
     return result;
 }
@@ -137,14 +206,14 @@ def handleRequest() {
 }
 ```
 
-### Constants
+#### Constants
 
 The `const` keyword declares a compile-time constant. Constants must have a **primitive type** and their initializer must be a compile-time foldable expression — a literal or an expression composed entirely of other constants.
 
 ```orca
-const Pi := 3.14159;          # float constant
-const MaxRetries := 5;        # int constant
-const AppName := "MyApp";     # string constant
+const Pi := 3.14159;              # float constant
+const MaxRetries := 5;            # int constant
+const AppName := "MyApp";         # string constant
 const Doubled := MaxRetries * 2;  # valid: folds to 10 at compile time
 ```
 
@@ -152,14 +221,14 @@ Constants are never reassignable. A collection instance or array cannot be `cons
 
 ---
 
-## Collections
+### Collections
 
 A `coll` defines a data type — similar to a record or struct. Its body declares instance fields.
 
 ```orca
 coll Point {
-    float x;
-    float y;
+    x: float;
+    y: float;
 }
 ```
 
@@ -169,11 +238,11 @@ An `impl` block adds constants, static variables, and methods:
 impl Point {
     const Origin := Point(0.0, 0.0);
 
-    def Point new(float x, float y) {
+    def new(x: float, y: float): Point {
         return Point(x, y);
     }
 
-    def float distanceTo(self, Point other) {
+    def distanceTo(self, other: Point): float {
         let dx := self.x - other.x;
         let dy := self.y - other.y;
         return Math::sqrt(dx * dx + dy * dy);
@@ -187,13 +256,13 @@ Instances are created by calling the collection name with positional arguments m
 let p := Point(1.0, 2.0);
 ```
 
-### Structural Typing
+#### Structural Typing
 
 Collections use **structural typing**: two collections with the same field names and types are mutually assignable, regardless of their names.
 
 ```orca
-coll Point2D { float x; float y; }
-coll Vector2D { float x; float y; }
+coll Point2D { x: float; y: float; }
+coll Vector2D { x: float; y: float; }
 
 let p := Point2D(1.0, 2.0);
 let v: Vector2D = p;  # valid — same shape
@@ -203,45 +272,45 @@ This means compatibility is determined by structure, not by declaration name.
 
 ---
 
-## Functions and Methods
+### Functions and Methods
 
-Functions are declared with `def`. The return type, if any, is placed between `def` and the function name. A function with no explicit return type returns nothing.
+Functions are declared with `def`. The return type, if any, follows the parameter list after `:`. A function with no explicit return type returns nothing.
 
 ```orca
-def main() { ... }                     # no return value
-def int add(int a, int b) { ... }      # returns int
-def bool isEven(int n) { ... }         # returns bool
-def string greet(string name) { ... }  # returns string
+def main() { ... }                        # no return value
+def add(a: int, b: int): int { ... }      # returns int
+def isEven(n: int): bool { ... }          # returns bool
+def greet(name: string): string { ... }   # returns string
 ```
 
-### Instance Methods
+#### Instance Methods
 
 Instance methods receive the collection instance as an explicit `self` parameter:
 
 ```orca
-def string display(self) {
+def display(self): string {
     return "(" + str(self.x) + ", " + str(self.y) + ")";
 }
 ```
 
-### Static Methods
+#### Static Methods
 
 Methods inside `impl` without `self` act as static functions scoped to the collection:
 
 ```orca
-def Point fromAngle(float angle, float radius) {
+def fromAngle(angle: float, radius: float): Point {
     return Point(Math::cos(angle) * radius, Math::sin(angle) * radius);
 }
 ```
 
 Called as `Point::fromAngle(angle, radius)`.
 
-### Free Functions
+#### Free Functions
 
 Functions can also be declared at the module level, outside any `coll` or `impl`:
 
 ```orca
-def int clamp(int value, int min, int max) {
+def clamp(value: int, min: int, max: int): int {
     if (value < min) { return min; }
     if (value > max) { return max; }
     return value;
@@ -250,7 +319,7 @@ def int clamp(int value, int min, int max) {
 
 ---
 
-## Static vs Instance Access
+### Static vs Instance Access
 
 Static members (constants, static variables, static methods) declared inside `impl` are accessed with `::`:
 
@@ -270,7 +339,7 @@ path.toAbsolutePath().normalize().toString()
 
 ---
 
-## Arrays
+### Arrays
 
 Arrays use Java-style syntax. Multi-dimensional arrays are supported.
 
@@ -287,9 +356,9 @@ grid[i][j] = 0;             # element assignment
 
 ---
 
-## Control Flow
+### Control Flow
 
-### If / Else
+#### If / Else
 
 ```orca
 if (score >= 90) {
@@ -301,7 +370,7 @@ if (score >= 90) {
 }
 ```
 
-### While
+#### While
 
 ```orca
 var i := 0;
@@ -311,7 +380,7 @@ while (i < 10) {
 }
 ```
 
-### For
+#### For
 
 ```orca
 for (var i := 0; i < 10; i++) {
@@ -321,9 +390,9 @@ for (var i := 0; i < 10; i++) {
 
 ---
 
-## Operators
+### Operators
 
-### Arithmetic
+#### Arithmetic
 
 | Operator | Meaning        |
 | -------- | -------------- |
@@ -333,34 +402,34 @@ for (var i := 0; i < 10; i++) {
 | `/`      | Division       |
 | `%`      | Modulo         |
 
-### Comparison
+#### Comparison
 
-| Operator | Meaning              |
-| -------- | -------------------- |
-| `==`     | Equal                |
-| `!=`     | Not equal            |
-| `<`      | Less than            |
-| `<=`     | Less than or equal   |
-| `>`      | Greater than         |
-| `>=`     | Greater than or equal|
+| Operator | Meaning               |
+| -------- | --------------------- |
+| `==`     | Equal                 |
+| `!=`     | Not equal             |
+| `<`      | Less than             |
+| `<=`     | Less than or equal    |
+| `>`      | Greater than          |
+| `>=`     | Greater than or equal |
 
-### Logical
-
-| Operator | Meaning         |
-| -------- | --------------- |
-| `&&`     | Logical and     |
-| `\|\|`   | Logical or      |
-| `!x`     | Logical not     |
-
-### Unary
+#### Logical
 
 | Operator | Meaning     |
 | -------- | ----------- |
-| `-x`     | Negation    |
-| `x++`    | Increment   |
-| `x--`    | Decrement   |
+| `&&`     | Logical and |
+| `\|\|`   | Logical or  |
+| `!x`     | Logical not |
 
-### Combined Examples
+#### Unary
+
+| Operator | Meaning   |
+| -------- | --------- |
+| `-x`     | Negation  |
+| `x++`    | Increment |
+| `x--`    | Decrement |
+
+#### Combined Examples
 
 ```orca
 # range check
@@ -382,18 +451,18 @@ for (var i := 1; i <= 100; i++) {
 }
 
 # absolute value
-def float abs(float x) {
+def abs(x: float): float {
     if (x < 0.0) { return -x; }
     return x;
 }
 
 # test if a number is outside a range
-def bool outOfRange(int value, int lo, int hi) {
+def outOfRange(value: int, lo: int, hi: int): bool {
     return !(value >= lo && value <= hi);
 }
 
 # clamp with compound assignment
-def int clamp(int v, int lo, int hi) {
+def clamp(v: int, lo: int, hi: int): int {
     var result := v;
     if (result < lo) { result = lo; }
     if (result > hi) { result = hi; }
@@ -403,11 +472,11 @@ def int clamp(int v, int lo, int hi) {
 
 ---
 
-## Built-ins
+### Built-ins
 
 Orca provides a small set of built-in functions available without any import.
 
-### `not(bool) -> bool`
+#### `not(bool) -> bool`
 
 Logical negation. Equivalent to the `!` prefix operator.
 
@@ -416,7 +485,7 @@ if (!isReady()) { return; }
 while (!done) { ... }
 ```
 
-### `str(T) -> string`
+#### `str(T) -> string`
 
 Converts any primitive value to its string representation. Accepts `byte`, `short`, `int`, `long`, `float`, `double`, `bool`, `char`, and `string`.
 
@@ -433,7 +502,7 @@ std::io::println("Age: " + str(age));   # correct
 # std::io::println("Age: " + age);      # type error
 ```
 
-### `floor(float) -> int`
+#### `floor(float) -> int`
 
 Returns the largest integer less than or equal to the given value.
 
@@ -442,7 +511,7 @@ let n := floor(3.9);   # 3
 let m := floor(-1.2);  # -2
 ```
 
-### `ceil(float) -> int`
+#### `ceil(float) -> int`
 
 Returns the smallest integer greater than or equal to the given value.
 
@@ -451,7 +520,7 @@ let n := ceil(3.1);    # 4
 let m := ceil(-1.8);   # -1
 ```
 
-### `length(string) -> int` / `length(array) -> int`
+#### `length(string) -> int` / `length(array) -> int`
 
 Returns the length of a string or array.
 
@@ -462,15 +531,15 @@ let k := length(scores);        # number of elements in scores array
 
 ---
 
-## Strings
+### Strings
 
 String literals support common escape sequences:
 
-| Sequence | Meaning       |
-| -------- | ------------- |
-| `\n`     | Newline       |
-| `\"`     | Double quote  |
-| `\\`     | Backslash     |
+| Sequence | Meaning      |
+| -------- | ------------ |
+| `\n`     | Newline      |
+| `\"`     | Double quote |
+| `\\`     | Backslash    |
 
 ```orca
 let msg := "Line one\nLine two";
@@ -480,7 +549,7 @@ let quoted := "He said \"hello\"";
 
 ---
 
-## Java Interop
+### Java Interop
 
 Orca can import and call Java standard library and third-party JVM classes directly:
 
@@ -497,7 +566,7 @@ let content := Files::readString(path);
 
 ---
 
-## Native Library Interop
+### Native Library Interop
 
 Orca supports bindings to native libraries via JNI. The following example uses a Raylib binding for windowing:
 
@@ -516,39 +585,7 @@ while (!Raylib::WindowShouldClose()) {
 
 ---
 
-## Build System
-
-Orca integrates with Gradle. Projects are built and run using standard Gradle tasks.
-
-**Prerequisites:** Java 21 or later.
-
-```bash
-# Build all modules
-./gradlew build
-
-# Run all tests
-./gradlew test
-
-# Run the compiler CLI
-./gradlew :modules:cli:run --args="path/to/file.orca"
-```
-
----
-
-## Contributing
-
-1. Fork the repository and clone it locally
-2. Create a branch for your work: `git checkout -b my-fix`
-3. Build the project: `./gradlew build`
-4. Run the tests to make sure everything passes: `./gradlew test`
-5. Make your changes, then run the tests again
-6. Open a pull request — a draft PR is welcome if you want early feedback
-
-If you have questions at any point, feel free to comment on the issue.
-
----
-
-## Full Example
+### Full Example
 
 A small program that models a 2D point, computes distances, and prints a report:
 
@@ -558,22 +595,22 @@ package geometry;
 import java::lang::Math;
 
 coll Point {
-    float x;
-    float y;
+    x: float;
+    y: float;
 }
 
 impl Point {
-    def Point new(float x, float y) {
+    def new(x: float, y: float): Point {
         return Point(x, y);
     }
 
-    def float distanceTo(self, Point other) {
+    def distanceTo(self, other: Point): float {
         let dx := self.x - other.x;
         let dy := self.y - other.y;
         return Math::sqrt(dx * dx + dy * dy);
     }
 
-    def string display(self) {
+    def display(self): string {
         return "(" + str(self.x) + ", " + str(self.y) + ")";
     }
 }
