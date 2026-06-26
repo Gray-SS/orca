@@ -118,7 +118,7 @@ public abstract class LocalBinder extends Binder {
 
     private BoundVariableDeclStmt bindLocalVariableDecl(VariableDeclarationStatement decl) throws CompilerException {
         var declarator = decl.variableDeclarator();
-        var boundDeclarator = bindVariableDeclarator(declarator, true);
+        var boundDeclarator = bindVariableDeclarator(declarator, true, null);
         if (!(boundDeclarator.variable() instanceof SourceVariableSymbol variable)) {
             throw SemanticErrors.unexpectedError(declarator, "Expected a SourceVariableSymbol for a local variable declarator");
         }

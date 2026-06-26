@@ -438,19 +438,22 @@ public abstract class Binder {
         };
     }
 
-    protected BoundVariableDeclarator bindVariableDeclarator(VariableDeclaratorSyntax declarator, boolean isLocal) throws CompilerException {
+    public BoundVariableDeclarator bindVariableDeclarator(VariableDeclaratorSyntax declarator, boolean isLocal, @Nullable NamespaceOrTypeSymbol owner) throws CompilerException {
         final var name = declarator.identifier().text();
 
         final var modifierToken = declarator.modifierToken();
         final var modifierKind = modifierToken.kind();
 
         final var isConst = modifierKind == TokenKind.ConstKeyword;
-        final var isLet = modifierKind == TokenKind.LetKeyword;
-        final var requireInitializer = isConst || isLet;
+        final var isImmutable = isConst || (modifierKind == TokenKind.LetKeyword && !declarator.isMutable());
 
         final var declaredType = declarator.type() != null ? resolveType(declarator.type()) : null;
         if (declaredType != null && declaredType.isVoid()) {
             throw SemanticErrors.voidVariableType(declarator, name);
+        }
+
+        if (isConst && declarator.isMutable()) {
+            throw SemanticErrors.constVariableCannotBeMutable(declarator, name);
         }
 
         BoundExpression boundInitializer = null;
@@ -473,16 +476,16 @@ public abstract class Binder {
             throw SemanticErrors.missingConstantBaseType(declarator, name);
         }
 
-        if (requireInitializer && boundInitializer == null) {
-            throw SemanticErrors.missingVariableInitializer(declarator, name, modifierToken.text());
+        if (isImmutable && boundInitializer == null) {
+            throw SemanticErrors.immutableVariableMissingInitializer(declarator, name, modifierToken.text());
         }
 
         // Initializer of a constant variable must be compile-time evaluable.
         SourceVariableSymbol variable;
         if (isConst) {
             if (boundInitializer == null) {
-                // Already checked but makes the compiler happy
-                throw SemanticErrors.missingVariableInitializer(declarator, name, modifierToken.text());
+                // Implicitly checked but makes the compiler happy
+                throw SemanticErrors.immutableVariableMissingInitializer(declarator, name, modifierToken.text());
             }
 
             // Initializer must be compile-time evaluable.
@@ -492,12 +495,14 @@ public abstract class Binder {
 
             var constantValue = boundInitializer.getConstant();
 
-            // example: const x := 20; -> 20 is an int literal but needs to be converted to the declared type (e.g., float) of the constant variable
+            // example: const x: float = 20; -> 20 is an int literal but needs to be converted to the declared type (e.g., float) of the constant variable
             var convertedConstantValue = constantValue.convertTo(variableType);
 
-            variable = SourceVariableSymbol.createConstant(null, name, declarator, convertedConstantValue, isLocal);
+            variable = SourceVariableSymbol.createConstant(owner, name, declarator, convertedConstantValue, isLocal);
         } else {
-            variable = SourceVariableSymbol.createLocal(name, declarator, variableType, isLet);
+            variable = isLocal
+                ? SourceVariableSymbol.createLocal(name, declarator, variableType, isImmutable)
+                : SourceVariableSymbol.createAssociated(owner, name, declarator, variableType, isImmutable);
         }
 
         return new BoundVariableDeclarator(variable, boundInitializer);

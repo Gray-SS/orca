@@ -107,7 +107,7 @@ public class Parser {
 
     private boolean isMemberStart() {
         return switch (tokenKind()) {
-            case DefKeyword, CollKeyword, ImplKeyword, VarKeyword, LetKeyword, ConstKeyword ->
+            case DefKeyword, CollKeyword, ImplKeyword, LetKeyword, ConstKeyword ->
                 true;
             default ->
                 false;
@@ -125,7 +125,7 @@ public class Parser {
             case ImplKeyword -> {
                 return parseImplBlock();
             }
-            case VarKeyword, LetKeyword, ConstKeyword -> {
+            case LetKeyword, ConstKeyword -> {
                 return parseVariableDeclaration();
             }
 
@@ -160,7 +160,7 @@ public class Parser {
             case ForKeyword -> {
                 return parseForStmt();
             }
-            case VarKeyword, LetKeyword, ConstKeyword -> {
+            case LetKeyword, ConstKeyword -> {
                 return parseVariableDeclarationStatement();
             }
 
@@ -194,7 +194,7 @@ public class Parser {
 
     private boolean isStatementStart() {
         return switch (tokenKind()) {
-            case LBrace, ReturnKeyword, IfKeyword, WhileKeyword, ForKeyword, VarKeyword, LetKeyword, ConstKeyword ->
+            case LBrace, ReturnKeyword, IfKeyword, WhileKeyword, ForKeyword, LetKeyword, ConstKeyword ->
                 true;
             default ->
                 isExpressionStart();
@@ -208,24 +208,23 @@ public class Parser {
     }
 
     private VariableDeclaratorSyntax parseVariableDeclarator() {
-        SyntaxToken modifierToken = matchTokenOptionnal(TokenKind.VarKeyword, TokenKind.LetKeyword, TokenKind.ConstKeyword);
+        SyntaxToken modifierToken = matchTokenOptionnal(TokenKind.LetKeyword, TokenKind.ConstKeyword);
+        SyntaxToken mutToken = matchTokenOptionnal(TokenKind.MutKeyword);
+
         SimpleIdentifierSyntax name = parseSimpleIdentifier();
 
         TypeSyntax type = null;
         ExpressionSyntax initializer = null;
-        if (matchTokenOptionnal(TokenKind.ColonEquals) != null) {
-            // Support `var x := 5;` syntax for local variable declarations, in addition to the standard `var x: int = 5;`.
-            initializer = parseExpr();
-        } else {
+        if (tokenIs(TokenKind.Colon)) {
             matchToken(TokenKind.Colon);
             type = parseType();
-
-            if (matchTokenOptionnal(TokenKind.Equals) != null) {
-                initializer = parseExpr();
-            }
         }
 
-        return new VariableDeclaratorSyntax(modifierToken, name, type, initializer);
+        if (matchTokenOptionnal(TokenKind.Equals) != null) {
+            initializer = parseExpr();
+        }
+
+        return new VariableDeclaratorSyntax(mutToken, modifierToken, name, type, initializer);
     }
 
     private VariableDeclarationSyntax parseVariableDeclaration() {
@@ -399,7 +398,7 @@ public class Parser {
         VariableDeclaratorSyntax variableDeclarator = parseVariableDeclarator();
         matchToken(TokenKind.Semicolon);
 
-        return new VariableDeclarationStatement(variableDeclarator.modifierToken(), variableDeclarator.identifier(), variableDeclarator.type(), variableDeclarator.initializer());
+        return new VariableDeclarationStatement(variableDeclarator);
     }
 
     public ExpressionSyntax parseExpr() {

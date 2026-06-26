@@ -21,14 +21,12 @@ import com.orca.compiler.core.symbols.sources.SourceMethodSymbol;
 import com.orca.compiler.core.symbols.sources.SourceNominalTypeSymbol;
 import com.orca.compiler.core.symbols.sources.SourceParameterSymbol;
 import com.orca.compiler.core.symbols.sources.SourceSymbol;
-import com.orca.compiler.core.symbols.sources.SourceVariableSymbol;
 import com.orca.compiler.core.symbols.Lazy;
 import com.orca.compiler.core.syntax.members.CollectionDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.ImplBlockSyntax;
 import com.orca.compiler.core.syntax.members.MemberSyntax;
 import com.orca.compiler.core.syntax.members.MethodDeclarationSyntax;
 import com.orca.compiler.core.syntax.members.VariableDeclarationSyntax;
-import com.orca.compiler.core.lexer.TokenKind;
 import com.orca.compiler.core.typesystem.CollectionType;
 import com.orca.compiler.core.typesystem.LangType;
 
@@ -355,64 +353,16 @@ public final class SymbolDeclarator {
         Preconditions.checkArgument(decl.variableDeclarator() != null, "Variable declarator cannot be null");
 
         var declarator = decl.variableDeclarator();
-        final var name = declarator.identifier().text();
-        final var modifierToken = declarator.modifierToken();
-        final var modifierKind = modifierToken.kind();
-        final var isConst = modifierKind == TokenKind.ConstKeyword;
-        final var isLet = modifierKind == TokenKind.LetKeyword;
-        final var requireInitializer = isConst || isLet;
-        final var owner = binder.getOwnerSymbol();
-        final var declaredType = declarator.type() != null ? binder.resolveType(declarator.type()) : null;
+        var owner = binder.getOwnerSymbol();
 
-        if (declaredType != null && declaredType.isVoid()) {
-            throw SemanticErrors.voidVariableType(declarator, name);
+        var bound = binder.bindVariableDeclarator(declarator, false, owner);
+        declare(owner, (SourceSymbol) bound.variable());
+
+        if (declarator.initializer() != null && bound.initializer() != null) {
+            model.cacheBoundNode(declarator.initializer(), bound.initializer());
         }
 
-        com.orca.compiler.core.boundtree.BoundExpression boundInitializer = null;
-        if (declarator.initializer() != null) {
-            boundInitializer = (com.orca.compiler.core.boundtree.BoundExpression) binder.bindExpr(declarator.initializer());
-            if (declaredType != null && !boundInitializer.type().isAssignableTo(declaredType)) {
-                throw SemanticErrors.typeMismatch(declarator, declaredType, boundInitializer.type());
-            }
-        }
-
-        final var variableType = (declaredType != null) ? declaredType : (boundInitializer != null ? boundInitializer.type() : null);
-        if (variableType == null) {
-            throw SemanticErrors.cannotInferVariableType(declarator, name);
-        }
-
-        if (isConst && !variableType.isPrimitive()) {
-            throw SemanticErrors.missingConstantBaseType(declarator, name);
-        }
-
-        if (requireInitializer && boundInitializer == null) {
-            throw SemanticErrors.missingVariableInitializer(declarator, name, modifierToken.text());
-        }
-
-        SourceVariableSymbol variable;
-        if (isConst) {
-            if (boundInitializer == null) {
-                throw SemanticErrors.missingVariableInitializer(declarator, name, modifierToken.text());
-            }
-            if (!boundInitializer.isCompileTimeFoldable()) {
-                throw SemanticErrors.constantNonCompileTimeFoldableInitializer(declarator, name);
-            }
-
-            var constantValue = boundInitializer.getConstant();
-            // const x := 20 — literal int may need conversion to declared type (e.g. float)
-            var convertedConstantValue = constantValue.convertTo(variableType);
-            variable = SourceVariableSymbol.createConstant(owner, name, declarator, convertedConstantValue, false);
-        } else {
-            variable = SourceVariableSymbol.createAssociated(owner, name, declarator, variableType, isLet);
-        }
-
-        declare(owner, variable);
-
-        if (declarator.initializer() != null && boundInitializer != null) {
-            model.cacheBoundNode(declarator.initializer(), boundInitializer);
-        }
-
-        return variable;
+        return bound.variable();
     }
 
     private void declare(NamespaceOrTypeSymbol owner, SourceSymbol symbol) {

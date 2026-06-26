@@ -17,7 +17,7 @@ public class SyntaxFacts {
             Map.entry("is", TokenKind.IsKeyword),
             Map.entry("true", TokenKind.BoolLiteral),
             Map.entry("false", TokenKind.BoolLiteral),
-            Map.entry("var", TokenKind.VarKeyword),
+            Map.entry("mut", TokenKind.MutKeyword),
             Map.entry("let", TokenKind.LetKeyword),
             Map.entry("const", TokenKind.ConstKeyword),
             Map.entry("coll", TokenKind.CollKeyword),

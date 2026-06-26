@@ -404,8 +404,8 @@ public class TestTypeChecker {
     public void testVariableDeclaredInsideForLoopIsAccessible() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
-                        forBody.declareVarVariable("k", "i * 2");
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
+                        forBody.declareLetMutVariable("k", "i * 2");
                     });
                 })
                 .build();
@@ -417,8 +417,8 @@ public class TestTypeChecker {
     public void testVariableDeclaredOutsideForLoopIsAccessible() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
-                        forBody.declareVarVariable("k", "i * 2");
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
+                        forBody.declareLetMutVariable("k", "i * 2");
                     });
                 })
                 .build();
@@ -430,10 +430,10 @@ public class TestTypeChecker {
     public void testVariableDeclaredInsideForLoopIsNotAccessibleOutside() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
-                        forBody.declareVarVariable("k", "i * 2");
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
+                        forBody.declareLetMutVariable("k", "i * 2");
                     });
-                    b.declareVarVariable("l", "k + i");
+                    b.declareLetMutVariable("l", "k + i");
                 })
                 .build();
 
@@ -668,7 +668,7 @@ public class TestTypeChecker {
     public void testUninitializedVariableInitializedInBothBranches() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.declareVarVariable("x", "true", "bool");
+                    b.declareLetMutVariable("x", "true", "bool");
                     b.withIf("true", ifBody -> ifBody.withAssignment("x", "true"));
                     b.withElse(elseBody -> elseBody.withAssignment("x", "false"));
                     b.declareLetVariable("y", "x", "bool");
@@ -685,7 +685,7 @@ public class TestTypeChecker {
     public void testFullProgramTypeChecks() throws Exception {
         String source = SourceBuilder.create()
                 .withCollection("Point", f -> f.withField("int", "x").withField("int", "y"))
-                .declareVarVariable("globalCounter", "0", "int")
+                .declareLetMutVariable("globalCounter", "0", "int")
                 .declareConstVariable("size", "5", "int")
                 .withFunction("int", "sum", p -> p.withParameter("a", "int").withParameter("b", "int"), b -> b.withReturn("a + b"))
                 .withVoidFunction("test", b -> {
@@ -704,8 +704,8 @@ public class TestTypeChecker {
     public void testForLoopTypeChecks() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.declareVarVariable("sum", "0", "int");
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                    b.declareLetMutVariable("sum", "0", "int");
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
                         forBody.withStatement("sum += i");
                     });
                 })
@@ -718,7 +718,7 @@ public class TestTypeChecker {
     public void testWhileLoopTypeChecks() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.declareVarVariable("n", "10");
+                    b.declareLetMutVariable("n", "10");
                     b.withWhile("n > 0", whileBody -> whileBody.withAssignment("n", "n - 1"));
                     b.withReturn();
                 })
@@ -887,5 +887,24 @@ public class TestTypeChecker {
                 .build();
 
         TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
+    }
+
+    @Test
+    public void testConstantVariableCannotBeMutable() throws Exception {
+        String source = SourceBuilder.create()
+                .withCollection("A", b -> {
+                })
+                .withImpl("A", impl -> {
+                    impl.declareVariable("const", "a", "10", "int", true);
+                    impl.withVoidMethod("test", b -> {
+                        impl.declareVariable("const", "b", "10", "int", true);
+                    });
+                })
+                .withMainFunction(b -> {
+                    b.declareVariable("const", "c", "10", "int", true);
+                })
+                .build();
+
+        assertErrorForApplication(source, DiagnosticCode.SEM_CONSTANT_MUTABLE);
     }
 }

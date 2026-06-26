@@ -31,28 +31,38 @@ public abstract class SourceBuilder {
     }
 
     // --- Variable declarations ---
+    public SourceBuilder declareVariable(String modifier, String name, String initializer, String type, boolean isMutable) {
+        appendFormat("%s%s%s: %s = %s;\n", modifier, isMutable ? " mut " : " ", name, type, initializer);
+        return this;
+    }
+
+    public SourceBuilder declareVariable(String modifier, String name, String initializer, boolean isMutable) {
+        appendFormat("%s%s%s = %s;\n", modifier, isMutable ? " mut " : " ", name, initializer);
+        return this;
+    }
+
     public SourceBuilder declareLetVariable(String name, String initializer, String type) {
-        appendFormat("let %s: %s = %s;\n", name, type, initializer);
+        declareVariable("let", name, initializer, type, false);
         return this;
     }
 
     public SourceBuilder declareLetVariable(String name, String initializer) {
-        appendFormat("let %s := %s;\n", name, initializer);
+        declareVariable("let", name, initializer, false);
         return this;
     }
 
-    public SourceBuilder declareVarVariable(String name, String initializer, String type) {
-        appendFormat("var %s: %s = %s;\n", name, type, initializer);
+    public SourceBuilder declareLetMutVariable(String name, String initializer, String type) {
+        declareVariable("let", name, initializer, type, true);
         return this;
     }
 
-    public SourceBuilder declareVarVariable(String name, String initializer) {
-        appendFormat("var %s := %s;\n", name, initializer);
+    public SourceBuilder declareLetMutVariable(String name, String initializer) {
+        declareVariable("let", name, initializer, true);
         return this;
     }
 
     public SourceBuilder declareConstVariable(String name, String initializer, String type) {
-        appendFormat("const %s: %s = %s;\n", name, type, initializer);
+        declareVariable("const", name, initializer, type, false);
         return this;
     }
 
