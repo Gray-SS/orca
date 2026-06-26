@@ -17,14 +17,14 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     }
 
     @Override
-    public TopLevelSourceBuilder declareVarVariable(String name, String initializer, String type) {
-        super.declareVarVariable(name, initializer, type);
+    public TopLevelSourceBuilder declareLetMutVariable(String name, String initializer, String type) {
+        super.declareLetMutVariable(name, initializer, type);
         return this;
     }
 
     @Override
-    public TopLevelSourceBuilder declareVarVariable(String name, String initializer) {
-        super.declareVarVariable(name, initializer);
+    public TopLevelSourceBuilder declareLetMutVariable(String name, String initializer) {
+        super.declareLetMutVariable(name, initializer);
         return this;
     }
 
