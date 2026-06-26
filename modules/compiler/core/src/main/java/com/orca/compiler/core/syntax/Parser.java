@@ -398,7 +398,7 @@ public class Parser {
         VariableDeclaratorSyntax variableDeclarator = parseVariableDeclarator();
         matchToken(TokenKind.Semicolon);
 
-        return new VariableDeclarationStatement(variableDeclarator.modifierToken(), variableDeclarator.identifier(), variableDeclarator.type(), variableDeclarator.initializer());
+        return new VariableDeclarationStatement(variableDeclarator);
     }
 
     public ExpressionSyntax parseExpr() {
