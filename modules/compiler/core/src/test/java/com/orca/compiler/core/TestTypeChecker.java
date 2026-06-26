@@ -26,7 +26,7 @@ public class TestTypeChecker {
 
     private static void assertChecksForLibrary(String... sources) throws Exception {
         var result = CompilerTestHelper.parseAndBindLibrary(sources);
-        assertTrue("Expected type check to succeed, but it failed with diagnostics: " + formatDiagnosticList(result.diagnostics()), result.isSuccess());
+        assertTrue("Expected type check to succeed, but it failed with diagnostics: " + formatDiagnosticList(result.diagnostics()) + "\nSource:\n " + String.join("\n", sources), result.isSuccess());
     }
 
     private static void assertErrorForLibrary(String source, DiagnosticCode expectedCode) throws Exception {

@@ -317,13 +317,6 @@ public class Parser {
     private MethodDeclarationSyntax parseFunctionDecl() {
         matchToken(TokenKind.DefKeyword);
 
-        TypeSyntax returnType = null;
-
-        boolean skipReturnType = tokenIs(TokenKind.Identifier) && tokenAtIs(1, TokenKind.LParen);
-        if (!skipReturnType) {
-            returnType = parseType();
-        }
-
         SimpleIdentifierSyntax functionName = parseSimpleIdentifier();
 
         matchToken(TokenKind.LParen);
@@ -339,6 +332,12 @@ public class Parser {
         }
 
         SyntaxToken rParen = matchToken(TokenKind.RParen);
+
+        TypeSyntax returnType = null;
+        if (tokenIs(TokenKind.Colon)) {
+            matchToken(TokenKind.Colon);
+            returnType = parseType();
+        }
 
         int endPos = rParen.span().start();
         SourceSpan parametersSpan = SourceSpan.fromBounds(lexer.source(), startPos, endPos);
@@ -387,8 +386,10 @@ public class Parser {
     }
 
     private FieldDeclarationSyntax parseField() {
-        TypeSyntax elementType = parseType();
         SimpleIdentifierSyntax elementName = parseSimpleIdentifier();
+        matchToken(TokenKind.Colon);
+
+        TypeSyntax elementType = parseType();
         matchToken(TokenKind.Semicolon);
 
         return new FieldDeclarationSyntax(elementName, elementType);
@@ -611,17 +612,13 @@ public class Parser {
     }
 
     private ParameterSyntax parseParameter() {
-        boolean skipType = tokenIs(TokenKind.Identifier) && (tokenAtIs(1, TokenKind.Comma) || tokenAtIs(1, TokenKind.RParen));
-
-        if (skipType) {
-            var identifier = parseSimpleIdentifier();
+        SimpleIdentifierSyntax identifier = parseSimpleIdentifier();
+        if (matchTokenOptionnal(TokenKind.Colon) != null) {
+            var type = parseType();
+            return ParameterSyntax.createTyped(type, identifier);
+        } else {
             return ParameterSyntax.createReceiver(identifier);
         }
-
-        TypeSyntax type = parseType();
-        SimpleIdentifierSyntax identifier = parseSimpleIdentifier();
-
-        return ParameterSyntax.createTyped(type, identifier);
     }
 
     private boolean isTypeStart() {

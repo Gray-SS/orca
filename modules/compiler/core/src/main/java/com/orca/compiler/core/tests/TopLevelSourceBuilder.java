@@ -52,9 +52,10 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     public TopLevelSourceBuilder withFunction(String returnType, String name,
             Consumer<ParameterContextSourceBuilder> paramsBuilder,
             Consumer<LocalContextSourceBuilder> bodyBuilder) {
-        final String format = "def %s %s(%s) {\n%s\n}\n";
-        appendFormat(format, returnType, name,
+        final String format = "def %s(%s): %s {\n%s\n}\n";
+        appendFormat(format, name,
                 acceptAndBuild(new ParameterContextSourceBuilder(), paramsBuilder),
+                returnType,
                 acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
         return this;
     }
@@ -106,7 +107,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     public static final class CollectionBodyBuilder extends SourceBuilder {
 
         public CollectionBodyBuilder withField(String type, String name) {
-            appendFormat("%s %s;\n", type, name);
+            appendFormat("%s: %s;\n", name, type);
             return this;
         }
     }
@@ -116,9 +117,10 @@ public class TopLevelSourceBuilder extends SourceBuilder {
         public ImplBodyBuilder withMethod(String returnType, String name,
                 Consumer<ParameterContextSourceBuilder> paramsBuilder,
                 Consumer<LocalContextSourceBuilder> bodyBuilder) {
-            final String format = "def %s %s(%s) {\n%s\n}\n";
-            appendFormat(format, returnType, name,
+            final String format = "def %s(%s): %s {\n%s\n}\n";
+            appendFormat(format, name,
                     acceptAndBuild(new ParameterContextSourceBuilder(), paramsBuilder),
+                    returnType,
                     acceptAndBuild(new LocalContextSourceBuilder(), bodyBuilder));
             return this;
         }
@@ -160,7 +162,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
-            appendFormat("%s %s", type, name);
+            appendFormat("%s: %s", name, type);
             return this;
         }
     }
