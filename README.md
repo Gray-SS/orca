@@ -520,6 +520,32 @@ while (!Raylib::WindowShouldClose()) {
 
 Orca integrates with Gradle. Projects are built and run using standard Gradle tasks.
 
+**Prerequisites:** Java 21 or later.
+
+```bash
+# Build all modules
+./gradlew build
+
+# Run all tests
+./gradlew test
+
+# Run the compiler CLI
+./gradlew :modules:cli:run --args="path/to/file.orca"
+```
+
+---
+
+## Contributing
+
+1. Fork the repository and clone it locally
+2. Create a branch for your work: `git checkout -b my-fix`
+3. Build the project: `./gradlew build`
+4. Run the tests to make sure everything passes: `./gradlew test`
+5. Make your changes, then run the tests again
+6. Open a pull request — a draft PR is welcome if you want early feedback
+
+If you have questions at any point, feel free to comment on the issue.
+
 ---
 
 ## Full Example
