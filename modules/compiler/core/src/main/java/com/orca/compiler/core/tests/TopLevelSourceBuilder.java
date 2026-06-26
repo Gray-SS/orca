@@ -162,7 +162,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
-            appendFormat("%s %s", type, name);
+            appendFormat("%s: %s", name, type);
             return this;
         }
     }

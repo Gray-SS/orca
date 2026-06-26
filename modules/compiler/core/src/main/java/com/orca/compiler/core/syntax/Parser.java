@@ -610,17 +610,13 @@ public class Parser {
     }
 
     private ParameterSyntax parseParameter() {
-        boolean skipType = tokenIs(TokenKind.Identifier) && (tokenAtIs(1, TokenKind.Comma) || tokenAtIs(1, TokenKind.RParen));
-
-        if (skipType) {
-            var identifier = parseSimpleIdentifier();
+        SimpleIdentifierSyntax identifier = parseSimpleIdentifier();
+        if (matchTokenOptionnal(TokenKind.Colon) != null) {
+            var type = parseType();
+            return ParameterSyntax.createTyped(type, identifier);
+        } else {
             return ParameterSyntax.createReceiver(identifier);
         }
-
-        TypeSyntax type = parseType();
-        SimpleIdentifierSyntax identifier = parseSimpleIdentifier();
-
-        return ParameterSyntax.createTyped(type, identifier);
     }
 
     private boolean isTypeStart() {

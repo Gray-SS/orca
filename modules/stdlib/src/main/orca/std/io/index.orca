@@ -8,82 +8,82 @@ def println() {
     System::out.println();
 }
 
-def println(any value) {
+def println(value: any) {
     System::out.println(value);
 }
 
-def println(string value) {
+def println(value: string) {
     System::out.println(value);
 }
 
-def println(byte value) {
+def println(value: byte) {
     System::out.println(value);
 }
 
-def println(short value) {
+def println(value: short) {
     System::out.println(value);
 }
 
-def println(int value) {
+def println(value: int) {
     System::out.println(value);
 }
 
-def println(long value) {
+def println(value: long) {
     System::out.println(value);
 }
 
-def println(bool value) {
+def println(value: bool) {
     System::out.println(value);
 }
 
-def println(float value) {
+def println(value: float) {
     System::out.println(value);
 }
 
-def println(double value) {
+def println(value: double) {
     System::out.println(value);
 }
 
-def println(char value) {
+def println(value: char) {
     System::out.println(value);
 }
 
-def print(string value) {
+def print(value: string) {
     System::out.print(value);
 }
 
-def print(any value) {
+def print(value: any) {
     System::out.print(value);
 }
 
-def print(bool value) {
+def print(value: bool) {
     System::out.print(value);
 }
 
-def print(char value) {
+def print(value: char) {
     System::out.print(value);
 }
 
-def print(byte value) {
+def print(value: byte) {
     System::out.print(value);
 }
 
-def print(short value) {
+def print(value: short) {
     System::out.print(value);
 }
 
-def print(int value) {
+def print(value: int) {
     System::out.print(value);
 }
 
-def print(long value) {
+def print(value: long) {
     System::out.print(value);
 }
 
-def print(float value) {
+def print(value: float) {
     System::out.print(value);
 }
 
-def print(double value) {
+def print(value: double) {
     System::out.print(value);
 }
