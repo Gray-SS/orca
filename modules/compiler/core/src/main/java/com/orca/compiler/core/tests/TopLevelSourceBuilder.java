@@ -107,7 +107,7 @@ public class TopLevelSourceBuilder extends SourceBuilder {
     public static final class CollectionBodyBuilder extends SourceBuilder {
 
         public CollectionBodyBuilder withField(String type, String name) {
-            appendFormat("%s %s;\n", type, name);
+            appendFormat("%s: %s;\n", name, type);
             return this;
         }
     }

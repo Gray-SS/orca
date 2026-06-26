@@ -386,8 +386,10 @@ public class Parser {
     }
 
     private FieldDeclarationSyntax parseField() {
-        TypeSyntax elementType = parseType();
         SimpleIdentifierSyntax elementName = parseSimpleIdentifier();
+        matchToken(TokenKind.Colon);
+
+        TypeSyntax elementType = parseType();
         matchToken(TokenKind.Semicolon);
 
         return new FieldDeclarationSyntax(elementName, elementType);
