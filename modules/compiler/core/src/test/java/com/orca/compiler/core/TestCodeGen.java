@@ -366,7 +366,7 @@ public class TestCodeGen {
     @Test
     public void testLocalVariableReassignment() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("x", "1", "int");
+            b.declareLetMutVariable("x", "1", "int");
             b.withAssignment("x", "42");
             b.withPrintln("x");
         }, "42");
@@ -383,7 +383,7 @@ public class TestCodeGen {
     @Test
     public void testGlobalVariableReassignment() throws Exception {
         assertOutput(SourceBuilder.create()
-                .declareVarVariable("g", "10", "int")
+                .declareLetMutVariable("g", "10", "int")
                 .withMainFunction(b -> {
                     b.withAssignment("g", "99");
                     b.withPrintln("g");
@@ -477,8 +477,8 @@ public class TestCodeGen {
     @Test
     public void testWhileLoopSum() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("i", "0", "int");
-            b.declareVarVariable("sum", "0", "int");
+            b.declareLetMutVariable("i", "0", "int");
+            b.declareLetMutVariable("sum", "0", "int");
             b.withWhile("i < 5", wb -> {
                 wb.withAssignment("sum", "sum + i");
                 wb.withAssignment("i", "i + 1");
@@ -490,8 +490,8 @@ public class TestCodeGen {
     @Test
     public void testWhileLoopNotEntered() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("i", "10", "int");
-            b.declareVarVariable("x", "0", "int");
+            b.declareLetMutVariable("i", "10", "int");
+            b.declareLetMutVariable("x", "0", "int");
             b.withWhile("i < 5", wb -> wb.withAssignment("x", "1"));
             b.withPrintln("x");
         }, "0");
@@ -500,7 +500,7 @@ public class TestCodeGen {
     @Test
     public void testWhileLoopCountdown() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("n", "3", "int");
+            b.declareLetMutVariable("n", "3", "int");
             b.withWhile("n > 0", wb -> wb.withAssignment("n", "n - 1"));
             b.withPrintln("n");
         }, "0");
@@ -512,7 +512,7 @@ public class TestCodeGen {
     @Test
     public void testForLoopSum() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("sum", "0", "int");
+            b.declareLetMutVariable("sum", "0", "int");
             b.withFor("var i := 1", "i < 6", "i++", fb -> fb.withStatement("sum += i"));
             b.withPrintln("sum");
         }, "15");
@@ -521,7 +521,7 @@ public class TestCodeGen {
     @Test
     public void testForLoopEmptyRange() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("x", "99", "int");
+            b.declareLetMutVariable("x", "99", "int");
             b.withFor("var i := 5", "i < 5", "i++", fb -> fb.withAssignment("x", "0"));
             b.withPrintln("x");
         }, "99");
@@ -530,7 +530,7 @@ public class TestCodeGen {
     @Test
     public void testForLoopCounter() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("count", "0", "int");
+            b.declareLetMutVariable("count", "0", "int");
             b.withFor("var i := 0", "i < 10", "i++", fb -> fb.withStatement("count += 1"));
             b.withPrintln("count");
         }, "10");
@@ -896,7 +896,7 @@ public class TestCodeGen {
                     p.withParameter("arr", "int[]");
                     p.withParameter("n", "int");
                 }, b -> {
-                    b.declareVarVariable("s", "0", "int");
+                    b.declareLetMutVariable("s", "0", "int");
                     b.withFor("var i := 0", "i < n", "i++", fb -> fb.withStatement("s += arr[i]"));
                     b.withReturn("s");
                 })
@@ -915,8 +915,8 @@ public class TestCodeGen {
     @Test
     public void testStringBuilding() throws Exception {
         assertMainOutput(b -> {
-            b.declareVarVariable("result", "\"\"", "string");
-            b.declareVarVariable("i", "0", "int");
+            b.declareLetMutVariable("result", "\"\"", "string");
+            b.declareLetMutVariable("i", "0", "int");
             b.withWhile("i < 3", wb -> {
                 wb.withAssignment("result", "result + str(i)");
                 wb.withAssignment("i", "i + 1");
