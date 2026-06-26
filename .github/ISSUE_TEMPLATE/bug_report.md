@@ -29,3 +29,11 @@ What actually happened (error message, wrong output, crash, etc.).
 - Orca version / commit:
 - JDK version (`java -version`):
 - OS:
+
+## Tasks
+
+- [ ] Reproduce the bug locally
+- [ ] Identify the root cause
+- [ ] Write a failing test
+- [ ] Implement the fix
+- [ ] Verify the fix passes tests

@@ -28,3 +28,10 @@ Other approaches you thought about and why you prefer this one.
 ## Additional context
 
 Links, prior art in other languages, or anything else relevant.
+
+## Tasks
+
+- [ ] Finalize design / syntax decision
+- [ ] Implement the feature
+- [ ] Write tests
+- [ ] Update documentation / README
