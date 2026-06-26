@@ -12,7 +12,6 @@ public enum TokenKind {
     BadToken,
     // === Keywords ===
     // FinalKeyword,
-    VarKeyword,
     LetKeyword,
     ConstKeyword,
     CollKeyword,
