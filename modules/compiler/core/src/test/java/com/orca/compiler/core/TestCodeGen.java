@@ -513,7 +513,7 @@ public class TestCodeGen {
     public void testForLoopSum() throws Exception {
         assertMainOutput(b -> {
             b.declareLetMutVariable("sum", "0", "int");
-            b.withFor("var i := 1", "i < 6", "i++", fb -> fb.withStatement("sum += i"));
+            b.withFor("let mut i = 1", "i < 6", "i++", fb -> fb.withStatement("sum += i"));
             b.withPrintln("sum");
         }, "15");
     }
@@ -522,7 +522,7 @@ public class TestCodeGen {
     public void testForLoopEmptyRange() throws Exception {
         assertMainOutput(b -> {
             b.declareLetMutVariable("x", "99", "int");
-            b.withFor("var i := 5", "i < 5", "i++", fb -> fb.withAssignment("x", "0"));
+            b.withFor("let mut i = 5", "i < 5", "i++", fb -> fb.withAssignment("x", "0"));
             b.withPrintln("x");
         }, "99");
     }
@@ -531,7 +531,7 @@ public class TestCodeGen {
     public void testForLoopCounter() throws Exception {
         assertMainOutput(b -> {
             b.declareLetMutVariable("count", "0", "int");
-            b.withFor("var i := 0", "i < 10", "i++", fb -> fb.withStatement("count += 1"));
+            b.withFor("let mut i = 0", "i < 10", "i++", fb -> fb.withStatement("count += 1"));
             b.withPrintln("count");
         }, "10");
     }
@@ -897,7 +897,7 @@ public class TestCodeGen {
                     p.withParameter("n", "int");
                 }, b -> {
                     b.declareLetMutVariable("s", "0", "int");
-                    b.withFor("var i := 0", "i < n", "i++", fb -> fb.withStatement("s += arr[i]"));
+                    b.withFor("let mut i = 0", "i < n", "i++", fb -> fb.withStatement("s += arr[i]"));
                     b.withReturn("s");
                 })
                 .withMainFunction(b -> {

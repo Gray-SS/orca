@@ -404,7 +404,7 @@ public class TestTypeChecker {
     public void testVariableDeclaredInsideForLoopIsAccessible() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
                         forBody.declareLetMutVariable("k", "i * 2");
                     });
                 })
@@ -417,7 +417,7 @@ public class TestTypeChecker {
     public void testVariableDeclaredOutsideForLoopIsAccessible() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
                         forBody.declareLetMutVariable("k", "i * 2");
                     });
                 })
@@ -430,7 +430,7 @@ public class TestTypeChecker {
     public void testVariableDeclaredInsideForLoopIsNotAccessibleOutside() throws Exception {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
                         forBody.declareLetMutVariable("k", "i * 2");
                     });
                     b.declareLetMutVariable("l", "k + i");
@@ -705,7 +705,7 @@ public class TestTypeChecker {
         String source = SourceBuilder.create()
                 .withVoidFunction("test", b -> {
                     b.declareLetMutVariable("sum", "0", "int");
-                    b.withFor("var i := 0", "i < 10", "i++", forBody -> {
+                    b.withFor("let mut i = 0", "i < 10", "i++", forBody -> {
                         forBody.withStatement("sum += i");
                     });
                 })
