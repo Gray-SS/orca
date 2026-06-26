@@ -13,6 +13,7 @@ public enum TokenKind {
     // === Keywords ===
     // FinalKeyword,
     LetKeyword,
+    MutKeyword,
     ConstKeyword,
     CollKeyword,
     DefKeyword,
