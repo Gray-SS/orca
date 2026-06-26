@@ -78,7 +78,8 @@ public enum DiagnosticCode {
     SEM_TOP_LEVEL_STATEMENTS_NOT_ALLOWED(DiagnosticCategory.SEMANTIC_TOP_LEVEL_ORDER, "Top-level statements are not allowed"),
     // ─── Semantic — Constants ────────────────────────────────────────────────
 
-    SEM_CONSTANT_MISSING_INITIALIZER(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant missing initializer"),
+    SEM_CONSTANT_MUTABLE(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant cannot be mutable"),
+    SEM_IMMUTABLE_VAR_MISSING_INITIALIZER(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant missing initializer"),
     SEM_IMMUTABLE_ASSIGNMENT(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant assignment"),
     SEM_CONSTANT_MISSING_BASE_TYPE(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant missing base type"),
     SEM_CONSTANT_NON_COMPILE_TIME_FOLDABLE_INITIALIZER(DiagnosticCategory.SEMANTIC_CONSTANT, "Constant non-compile-time foldable initializer"),

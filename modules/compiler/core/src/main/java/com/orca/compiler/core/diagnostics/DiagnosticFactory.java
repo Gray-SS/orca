@@ -730,10 +730,18 @@ public final class DiagnosticFactory {
 
     // ─── Constant errors ────────────────────────────────────────────────────
     /**
-     * A constant declaration has no initializer expression.
+     * A constant variable was declared as mutable.
+     */
+    public static Diagnostic constVariableCannotBeMutable(IHaveSpan span, String variableName) {
+        return simpleWithCodeSnippet(DiagnosticCode.SEM_CONSTANT_MUTABLE, span,
+                "Constant variable '" + variableName + "' cannot be declared as mutable");
+    }
+
+    /**
+     * An immutable variable has no initializer expression.
      */
     public static Diagnostic immutableVariableMissingInitializer(IHaveSpan span, String name, String modifier) {
-        return simpleWithCodeSnippet(DiagnosticCode.SEM_CONSTANT_MISSING_INITIALIZER, span,
+        return simpleWithCodeSnippet(DiagnosticCode.SEM_IMMUTABLE_VAR_MISSING_INITIALIZER, span,
                 capitalize(modifier) + " '" + name + "' requires an initializer");
     }
 

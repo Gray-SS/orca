@@ -196,6 +196,10 @@ public final class SemanticErrors {
         return wrap(DiagnosticFactory.missingPackageDirective(source));
     }
 
+    public static CompilerException constVariableCannotBeMutable(IHaveSpan span, String variableName) {
+        return wrap(DiagnosticFactory.constVariableCannotBeMutable(span, variableName));
+    }
+
     public static CompilerException immutableVariableMissingInitializer(IHaveSpan span, String variableName, String modifier) {
         return wrap(DiagnosticFactory.immutableVariableMissingInitializer(span, variableName, modifier));
     }

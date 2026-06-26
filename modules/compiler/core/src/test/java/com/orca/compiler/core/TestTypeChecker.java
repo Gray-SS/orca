@@ -888,4 +888,23 @@ public class TestTypeChecker {
 
         TestTypeChecker.assertChecksForLibrary(sourceA, sourceB);
     }
+
+    @Test
+    public void testConstantVariableCannotBeMutable() throws Exception {
+        String source = SourceBuilder.create()
+                .withCollection("A", b -> {
+                })
+                .withImpl("A", impl -> {
+                    impl.declareConstVariable("mut a", "10", "int");
+                    impl.withVoidMethod("test", b -> {
+                        b.declareConstVariable("mut b", "10", "int");
+                    });
+                })
+                .withMainFunction(b -> {
+                    b.declareConstVariable("mut c", "10", "int");
+                })
+                .build();
+
+        assertErrorForApplication(source, DiagnosticCode.SEM_CONSTANT_MUTABLE);
+    }
 }
