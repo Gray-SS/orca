@@ -869,8 +869,26 @@ public class TestCodeGen {
     public void testBuiltinCeilExact() throws Exception {
         assertPrintln("ceil(3.0)", "3");
     }
+@Test
+public void testBuiltinAbsNegativeInt() throws Exception {
+    assertPrintln("abs(-5)", "5");
+}
 
-    @Test
+@Test
+public void testBuiltinAbsPositiveInt() throws Exception {
+    assertPrintln("abs(5)", "5");
+}
+
+@Test
+public void testBuiltinAbsNegativeFloat() throws Exception {
+    assertPrintln("abs(-3.7)", "3.7");
+}
+
+@Test
+public void testBuiltinAbsLargeNegative() throws Exception {
+    assertPrintln("abs(-100)", "100");
+}  
+     @Test
     public void testBuiltinStr() throws Exception {
         assertPrintln("str(42)", "42");
     }

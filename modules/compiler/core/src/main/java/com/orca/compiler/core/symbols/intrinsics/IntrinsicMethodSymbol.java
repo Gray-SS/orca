@@ -17,6 +17,13 @@ public final class IntrinsicMethodSymbol extends MethodSymbol implements Intrins
     public static final IntrinsicMethodSymbol NOT = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_NOT, LangType.Bool, List.of(LangType.Bool));
     public static final IntrinsicMethodSymbol FLOOR = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_FLOOR, LangType.Int, List.of(LangType.Float));
     public static final IntrinsicMethodSymbol CEIL = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_CEIL, LangType.Int, List.of(LangType.Float));
+ 
+    public static final IntrinsicMethodSymbol ABS_0BYTE = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0BYTE, LangType.Byte, List.of(LangType.Byte));
+    public static final IntrinsicMethodSymbol ABS_0SHORT = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0SHORT, LangType.Short, List.of(LangType.Short));
+    public static final IntrinsicMethodSymbol ABS_0INT = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0INT, LangType.Int, List.of(LangType.Int));
+    public static final IntrinsicMethodSymbol ABS_0LONG = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0LONG, LangType.Long, List.of(LangType.Long));
+    public static final IntrinsicMethodSymbol ABS_0FLOAT = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0FLOAT, LangType.Float, List.of(LangType.Float));
+    public static final IntrinsicMethodSymbol ABS_0DOUBLE = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_ABS_0DOUBLE, LangType.Double, List.of(LangType.Double));
     public static final IntrinsicMethodSymbol STR_0STRING = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_STR_0STRING, LangType.String, List.of(LangType.String));
     public static final IntrinsicMethodSymbol STR_0BYTE = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_STR_0BYTE, LangType.String, List.of(LangType.Byte));
     public static final IntrinsicMethodSymbol STR_0SHORT = new IntrinsicMethodSymbol(IntrinsicKind.METHOD_STR_0SHORT, LangType.String, List.of(LangType.Short));
@@ -41,6 +48,12 @@ public final class IntrinsicMethodSymbol extends MethodSymbol implements Intrins
                 NOT,
                 FLOOR,
                 CEIL,
+                ABS_0BYTE,
+                ABS_0SHORT,
+                ABS_0INT,
+                ABS_0LONG,
+                ABS_0FLOAT,
+                ABS_0DOUBLE,
                 STR_0STRING,
                 STR_0BYTE,
                 STR_0SHORT,

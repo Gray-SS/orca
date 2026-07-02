@@ -992,6 +992,32 @@ public final class MethodEmitter {
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "ceil", "(D)D", false);
                 mv.visitInsn(D2I);
             }
+                case METHOD_ABS_0BYTE -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(I)I", false);
+                    mv.visitInsn(I2B);
+                }
+                case METHOD_ABS_0SHORT -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(I)I", false);
+                    mv.visitInsn(I2S);
+                }
+                case METHOD_ABS_0INT -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(I)I", false);
+                }
+                case METHOD_ABS_0LONG -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(J)J", false);
+                }
+                case METHOD_ABS_0FLOAT -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(F)F", false);
+                }
+                case METHOD_ABS_0DOUBLE -> {
+                    emitExpr(mv, args.get(0));
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(D)D", false);
+                }
             case METHOD_LENGTH_0STRING -> {
                 var arg = args.get(0);
                 emitExpr(mv, arg);

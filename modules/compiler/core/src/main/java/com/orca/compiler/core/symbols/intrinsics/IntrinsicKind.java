@@ -14,6 +14,12 @@ public enum IntrinsicKind {
     METHOD_STR_0STRING("str"),
     METHOD_FLOOR("floor"),
     METHOD_CEIL("ceil"),
+    METHOD_ABS_0BYTE("abs"),
+    METHOD_ABS_0SHORT("abs"),
+    METHOD_ABS_0INT("abs"),
+    METHOD_ABS_0LONG("abs"),
+    METHOD_ABS_0FLOAT("abs"),
+    METHOD_ABS_0DOUBLE("abs"),
     METHOD_LENGTH_0STRING("length"),
     METHOD_LENGTH_0ARRAY("length"),;
 
